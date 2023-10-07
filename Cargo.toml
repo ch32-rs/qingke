@@ -1,17 +1,17 @@
 [package]
 name = "qingke"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Andelf <andelf@gmail.com>"]
 repository = "https://github.com/ch32-rs/qingke"
 documentation = "https://docs.rs/qingke"
 homepage = "https://github.com/ch32-rs/qingke"
-categories = []
+categories = ["embedded", "no-std", "hardware-support"]
 description = "Low level access to WCH's QingKe RISC-V processors"
-keywords = ["qingke", "wch"]
+keywords = ["qingke", "wch", "riscv"]
 readme = "README.md"
 license = "MIT/Apache-2.0"
 
 [dependencies]
 bit_field = "0.10.1"
-bitflags = "1.3.2"
+bitflags = "2.4"
