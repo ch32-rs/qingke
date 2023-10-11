@@ -12,11 +12,13 @@ pub struct Intsyscr {
 
 impl Intsyscr {
     #[inline]
+    /// 硬件压栈功能使能
     pub fn hwstken(&self) -> bool {
         self.bits.get_bit(0)
     }
 
     #[inline]
+    /// 中断嵌套功能使能
     pub fn inesten(&self) -> bool {
         self.bits.get_bit(1)
     }
@@ -32,6 +34,7 @@ impl Intsyscr {
     }
 
     #[inline]
+    /// 全局中断使能
     pub fn gihwstknen(&self) -> bool {
         self.bits.get_bit(5)
     }

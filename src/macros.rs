@@ -45,3 +45,20 @@ macro_rules! get_csr_value {
         }
     };
 }
+
+macro_rules! write_csr {
+    ($csr_number:literal) => {
+        /// Writes the CSR
+        #[inline]
+        #[allow(unused_variables)]
+        unsafe fn _write(bits: usize) {
+            match () {
+                #[cfg(riscv)]
+                () => core::arch::asm!(concat!("csrrw x0, ", stringify!($csr_number), ", {0}"), in(reg) bits),
+
+                #[cfg(not(riscv))]
+                () => unimplemented!(),
+            }
+        }
+    };
+}
