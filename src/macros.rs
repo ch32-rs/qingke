@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 macro_rules! read_csr_as {
     ($register:ident, $csr_number:expr) => {
         /// Reads the CSR
