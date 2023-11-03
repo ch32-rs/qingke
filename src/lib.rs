@@ -5,3 +5,6 @@
 mod macros;
 
 pub mod register;
+
+// re-export
+pub use riscv;
