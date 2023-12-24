@@ -4,6 +4,7 @@
 #[macro_use]
 mod macros;
 
+pub mod pfic;
 pub mod register;
 
 // re-export
