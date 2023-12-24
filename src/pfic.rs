@@ -45,48 +45,51 @@ const PFIC_IPRIOR0: *mut u8 = 0xE000E400 as *mut u8;
 /// 系统控制寄存器
 const PFIC_SCTLR: *mut u32 = 0xE000ED10 as *mut u32;
 
-/// Programmable Fast Interrupt Controller
-pub struct PFIC;
-
-impl PFIC {
-    #[inline]
-    pub fn enable_interrupt(&self, irq: u8) {
-        let offset = (irq / 32) as isize;
-        let bit = irq % 32;
-        unsafe {
-            ptr::write_volatile(PFIC_IENR0.offset(offset), 1 << bit);
-        }
+#[inline]
+pub fn enable_interrupt(irq: u8) {
+    let offset = (irq / 32) as isize;
+    let bit = irq % 32;
+    unsafe {
+        ptr::write_volatile(PFIC_IENR0.offset(offset), 1 << bit);
     }
+}
 
-    #[inline]
-    pub fn disable_interrupt(&self, irq: u8) {
-        let offset = (irq / 32) as isize;
-        let bit = irq % 32;
-        unsafe {
-            ptr::write_volatile(PFIC_IRER0.offset(offset), 1 << bit);
-        }
+#[inline]
+pub fn disable_interrupt(irq: u8) {
+    let offset = (irq / 32) as isize;
+    let bit = irq % 32;
+    unsafe {
+        ptr::write_volatile(PFIC_IRER0.offset(offset), 1 << bit);
     }
+}
 
-    #[inline]
-    pub fn pend_interrupt(&self, irq: u8) -> bool {
-        let offset = (irq / 32) as isize;
-        let bit = irq % 32;
-        unsafe { ptr::read_volatile(PFIC_IPSR0.offset(offset)) & (1 << bit) != 0 }
+#[inline]
+pub fn pend_interrupt(irq: u8) -> bool {
+    let offset = (irq / 32) as isize;
+    let bit = irq % 32;
+    unsafe { ptr::read_volatile(PFIC_IPSR0.offset(offset)) & (1 << bit) != 0 }
+}
+
+#[inline]
+pub fn unpend_interrupt(irq: u8) {
+    let offset = (irq / 32) as isize;
+    let bit = irq % 32;
+    unsafe {
+        ptr::write_volatile(PFIC_IPRR0.offset(offset), 1 << bit);
     }
+}
 
-    #[inline]
-    pub fn unpend_interrupt(&self, irq: u8) {
-        let offset = (irq / 32) as isize;
-        let bit = irq % 32;
-        unsafe {
-            ptr::write_volatile(PFIC_IPRR0.offset(offset), 1 << bit);
-        }
-    }
+#[inline]
+pub fn is_active(irq: u8) -> bool {
+    let offset = (irq / 32) as isize;
+    let bit = irq % 32;
+    unsafe { ptr::read_volatile(PFIC_IACTR0.offset(offset)) & (1 << bit) != 0 }
+}
 
-    #[inline]
-    pub fn is_active(&self, irq: u8) -> bool {
-        let offset = (irq / 32) as isize;
-        let bit = irq % 32;
-        unsafe { ptr::read_volatile(PFIC_IACTR0.offset(offset)) & (1 << bit) != 0 }
+#[inline]
+pub fn set_priority(irq: u8, priority: u8) {
+    let offset = irq as isize;
+    unsafe {
+        ptr::write_volatile(PFIC_IPRIOR0.offset(offset), priority);
     }
 }
