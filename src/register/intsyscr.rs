@@ -12,18 +12,21 @@ pub struct Intsyscr {
 
 impl Intsyscr {
     #[inline]
+    /// Hardware stack enable
     /// 硬件压栈功能使能
     pub fn hwstken(&self) -> bool {
         self.bits.get_bit(0)
     }
 
     #[inline]
+    /// Interrupt nest enable
     /// 中断嵌套功能使能
     pub fn inesten(&self) -> bool {
         self.bits.get_bit(1)
     }
 
     #[inline]
+    /// Premption configuration?
     pub fn pmtcfg(&self) -> u8 {
         self.bits.get_bits(2..=3) as u8
     }
@@ -34,7 +37,7 @@ impl Intsyscr {
     }
 
     #[inline]
-    /// 全局中断使能
+    /// Global interrupt hardware stack enable
     pub fn gihwstknen(&self) -> bool {
         self.bits.get_bit(5)
     }
