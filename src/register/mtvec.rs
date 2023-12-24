@@ -10,7 +10,6 @@ pub struct Mtvec {
 /// Trap mode
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum TrapMode {
-    /// All exceptions set pc to BASE.
     Direct = 0,
     /// Asynchronous interrupts set pc to BASE+4×cause.
     VectoredJumpInstruction = 1,
