@@ -46,7 +46,7 @@ const PFIC_IPRIOR0: *mut u8 = 0xE000E400 as *mut u8;
 const PFIC_SCTLR: *mut u32 = 0xE000ED10 as *mut u32;
 
 #[inline]
-pub fn enable_interrupt(irq: u8) {
+pub unsafe fn enable_interrupt(irq: u8) {
     let offset = (irq / 32) as isize;
     let bit = irq % 32;
     unsafe {
@@ -55,7 +55,7 @@ pub fn enable_interrupt(irq: u8) {
 }
 
 #[inline]
-pub fn disable_interrupt(irq: u8) {
+pub unsafe fn disable_interrupt(irq: u8) {
     let offset = (irq / 32) as isize;
     let bit = irq % 32;
     unsafe {
@@ -64,14 +64,14 @@ pub fn disable_interrupt(irq: u8) {
 }
 
 #[inline]
-pub fn pend_interrupt(irq: u8) -> bool {
+pub unsafe fn pend_interrupt(irq: u8) -> bool {
     let offset = (irq / 32) as isize;
     let bit = irq % 32;
     unsafe { ptr::read_volatile(PFIC_IPSR0.offset(offset)) & (1 << bit) != 0 }
 }
 
 #[inline]
-pub fn unpend_interrupt(irq: u8) {
+pub unsafe fn unpend_interrupt(irq: u8) {
     let offset = (irq / 32) as isize;
     let bit = irq % 32;
     unsafe {
@@ -87,7 +87,7 @@ pub fn is_active(irq: u8) -> bool {
 }
 
 #[inline]
-pub fn set_priority(irq: u8, priority: u8) {
+pub unsafe fn set_priority(irq: u8, priority: u8) {
     let offset = irq as isize;
     unsafe {
         ptr::write_volatile(PFIC_IPRIOR0.offset(offset), priority);
