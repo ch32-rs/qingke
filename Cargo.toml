@@ -37,3 +37,6 @@ defmt = { version = "0.3.5", optional = true }
 [features]
 critical-section-impl = ["dep:critical-section"]
 defmt = ["dep:defmt"]
+
+[package.metadata.docs.rs]
+targets = ["riscv32imac-unknown-none-elf"]
