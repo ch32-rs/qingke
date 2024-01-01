@@ -14,6 +14,7 @@ fn main() {
 
     println!("cargo:rustc-link-search={}", out_dir.display());
 
-    println!("cargo:rerun-if-changed=link.x");
+    println!("cargo:rerun-if-changed=link-highcode.x");
+    println!("cargo:rerun-if-changed=link-no-highcode.x");
     println!("cargo:rerun-if-changed=build.rs");
 }

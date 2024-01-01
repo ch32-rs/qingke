@@ -58,6 +58,25 @@ extern "C" {
     fn Software();
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(u8)]
+pub enum CoreInterrupt {
+    NonMaskableInt = 2,
+    SysTick = 12,
+    Software = 14,
+}
+
+impl CoreInterrupt {
+    pub fn try_from(irq: u8) -> Result<Self, u8> {
+        match irq {
+            2 => Ok(CoreInterrupt::NonMaskableInt),
+            12 => Ok(CoreInterrupt::SysTick),
+            14 => Ok(CoreInterrupt::Software),
+            _ => Err(irq),
+        }
+    }
+}
+
 /// Core interrupts
 #[doc(hidden)]
 #[no_mangle]
@@ -83,10 +102,10 @@ pub static __CORE_INTERRUPTS: [Option<unsafe extern "C" fn()>; 16] = [
 
 // bind all the potential device specific interrupts
 // to the default handler
-#[doc(hidden)]
-#[no_mangle]
-#[link_section = ".vector_table.interrupts"]
-pub static mut __EXTERNAL_INTERRUPTS: [Option<unsafe extern "C" fn()>; 256] = [None; 256];
+// #[doc(hidden)]
+// #[no_mangle]
+// #[link_section = ".vector_table.interrupts"]
+// pub static __DEFAULT_EXTERNAL_INTERRUPTS: [Option<unsafe extern "C" fn()>; 128] = [None; 128];
 
 /// The trap handler, Rust version.
 #[link_section = ".trap.rust"]
@@ -95,6 +114,9 @@ pub unsafe extern "C" fn qingke_start_trap_rust() {
     extern "C" {
         fn ExceptionHandler();
         fn DefaultHandler();
+
+        #[link_name = "__EXTERNAL_INTERRUPTS"]
+        static __EXTERNAL_INTERRUPTS: [Option<unsafe extern "C" fn()>; 128];
     }
 
     let cause = mcause::read();
@@ -178,4 +200,26 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     );
     mtvec::write(_start_trap as usize, TrapMode::Direct);
     gintenr::set_enable();
+}
+
+#[doc(hidden)]
+#[no_mangle]
+#[allow(non_snake_case)]
+pub fn DefaultInterruptHandler() {
+    loop {
+        // Prevent this from turning into a UDF instruction
+        // see rust-lang/rust#28728 for details
+        continue;
+    }
+}
+
+#[doc(hidden)]
+#[no_mangle]
+#[allow(non_snake_case)]
+pub fn DefaultExceptionHandler() -> ! {
+    loop {
+        // Prevent this from turning into a UDF instruction
+        // see rust-lang/rust#28728 for details
+        continue;
+    }
 }

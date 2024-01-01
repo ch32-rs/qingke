@@ -1,6 +1,6 @@
 [package]
 name = "qingke-rt-macros"
-version = "0.1.0"
+version = "0.1.7"
 edition = "2021"
 authors = ["Andelf <andelf@gmail.com>"]
 repository = "https://github.com/ch32v-rs/qingke"

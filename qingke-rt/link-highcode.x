@@ -1,4 +1,7 @@
 INCLUDE memory.x
+/* Provides weak aliases (cf. PROVIDED) for device specific interrupt handlers */
+/* This will usually be provided by a device crate generated using svd2rust (see `device.x`) */
+INCLUDE device.x
 
 PROVIDE(_stext = ORIGIN(REGION_TEXT));
 PROVIDE(_stack_start = ORIGIN(REGION_STACK) + LENGTH(REGION_STACK));
@@ -23,6 +26,11 @@ PROVIDE(NonMaskableInt = DefaultHandler);
 PROVIDE(SysTick = DefaultHandler);
 PROVIDE(Software = DefaultHandler);
 
+PROVIDE(DefaultHandler = DefaultInterruptHandler);
+PROVIDE(ExceptionHandler = DefaultExceptionHandler);
+
+/* PROVIDE(__EXTERNAL_INTERRUPTS = __DEFAULT_EXTERNAL_INTERRUPTS);*/
+
 /* # Interrupt vectors */
 EXTERN(__EXTERNAL_INTERRUPTS); /* `static` variable similar to `__EXCEPTIONS` */
 
@@ -42,7 +50,8 @@ SECTIONS
         _highcode_lma = LOADADDR(.highcode);
         PROVIDE(_highcode_vma_start = .);
         KEEP(*(.vector_table.exceptions));
-        KEEP(*(.vector_table.interrupts));
+        *(.vector_table.interrupts);
+        KEEP(*(.rodata.__EXTERNAL_INTERRUPTS));
         *(.trap .trap.rust)
         *(.highcode);
         *(.highcode.*);

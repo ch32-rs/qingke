@@ -64,19 +64,29 @@ pub unsafe fn disable_interrupt(irq: u8) {
 }
 
 #[inline]
-pub unsafe fn pend_interrupt(irq: u8) -> bool {
+pub fn is_enabled(irq: u8) -> bool {
     let offset = (irq / 32) as isize;
     let bit = irq % 32;
-    unsafe { ptr::read_volatile(PFIC_IPSR0.offset(offset)) & (1 << bit) != 0 }
+    unsafe { ptr::read_volatile(PFIC_IENR0.offset(offset)) & (1 << bit) != 0 }
+}
+
+#[inline]
+pub fn is_disabled(irq: u8) -> bool {
+    !is_enabled(irq)
+}
+
+#[inline]
+pub unsafe fn pend_interrupt(irq: u8) {
+    let offset = (irq / 32) as isize;
+    let bit = irq % 32;
+    unsafe { ptr::write_volatile(PFIC_IPSR0.offset(offset), 1 << bit) }
 }
 
 #[inline]
 pub unsafe fn unpend_interrupt(irq: u8) {
     let offset = (irq / 32) as isize;
     let bit = irq % 32;
-    unsafe {
-        ptr::write_volatile(PFIC_IPRR0.offset(offset), 1 << bit);
-    }
+    unsafe { ptr::write_volatile(PFIC_IPRR0.offset(offset), 1 << bit) }
 }
 
 #[inline]
@@ -92,4 +102,10 @@ pub unsafe fn set_priority(irq: u8, priority: u8) {
     unsafe {
         ptr::write_volatile(PFIC_IPRIOR0.offset(offset), priority);
     }
+}
+
+#[inline]
+pub fn get_priority(irq: u8) -> u8 {
+    let offset = irq as isize;
+    unsafe { ptr::read_volatile(PFIC_IPRIOR0.offset(offset)) }
 }

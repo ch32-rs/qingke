@@ -77,7 +77,7 @@ handle_reset:
 2:
     ",
     "
-    jal zero, _setup_interrupts
+    jal _setup_interrupts
 
     la t0, main
     csrw mepc, t0
