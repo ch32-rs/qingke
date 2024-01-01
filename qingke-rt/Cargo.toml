@@ -2,7 +2,19 @@
 name = "qingke-rt"
 version = "0.1.0"
 edition = "2021"
+authors = ["Andelf <andelf@gmail.com>"]
+repository = "https://github.com/ch32v-rs/qingke"
+documentation = "https://docs.rs/qingke-rt"
+homepage = "https://github.com/ch32v-rs/qingke"
+categories = ["no-std", "embedded"]
+description = "Minimal runtime / startup for WCH's RISC-V MCUs, managed by the ch32-rs team"
+keywords = ["wch", "riscv", "runtime", "startup"]
+readme = "README.md"
+license = "MIT/Apache-2.0"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+highcode = []
 
 [dependencies]
+qingke-rt-macros = { path = "./macros", version = "0.1.0" }
+qingke = { path = "../", version = "0.1.6" }
