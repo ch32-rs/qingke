@@ -1,15 +1,15 @@
 [package]
 name = "qingke-rt-macros"
-version = "0.1.7"
-edition = "2021"
-authors = ["Andelf <andelf@gmail.com>"]
-repository = "https://github.com/ch32v-rs/qingke"
-documentation = "https://docs.rs/qingke-rt-macros"
-homepage = "https://github.com/ch32v-rs/qingke-rt-macros"
-categories = ["embedded", "no-std"]
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+categories.workspace = true
+license.workspace = true
 description = "Macros re-exported in `qingke-rt`"
-keywords = ["riscv", "runtime", "startup"]
-license = "MIT/Apache-2.0"
+keywords = ["qingke", "wch", "riscv", "ch32v"]
 
 [lib]
 proc-macro = true

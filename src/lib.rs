@@ -4,13 +4,12 @@
 #[macro_use]
 mod macros;
 
+pub mod interrupt;
 pub mod pfic;
 pub mod register;
-pub mod interrupt;
 
 // re-export
 pub use riscv;
 
 #[cfg(feature = "critical-section-impl")]
 mod critical_section_impl;
-
