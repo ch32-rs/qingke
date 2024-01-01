@@ -1,9 +1,9 @@
-# [workspace]
-# members = ["qingke-rt"]
+[workspace]
+members = ["qingke-rt"]
 
 [package]
 name = "qingke"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 authors = ["Andelf <andelf@gmail.com>"]
 repository = "https://github.com/ch32-rs/qingke"
