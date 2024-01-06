@@ -100,7 +100,7 @@ pub fn highcode(_args: TokenStream, input: TokenStream) -> TokenStream {
 /// Marks a function as an interrupt handler
 #[proc_macro_attribute]
 pub fn interrupt(_args: TokenStream, input: TokenStream) -> TokenStream {
-    let mut f = parse_macro_input!(input as ItemFn);
+    let f = parse_macro_input!(input as ItemFn);
 
     // check the function arguments
     if !f.sig.inputs.is_empty() {
