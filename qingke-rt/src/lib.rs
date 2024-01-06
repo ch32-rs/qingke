@@ -7,7 +7,7 @@
 use qingke::register::{gintenr, mtvec, mtvec::TrapMode};
 use qingke::riscv::register::mcause;
 
-pub use qingke_rt_macros::entry;
+pub use qingke_rt_macros::{entry, interrupt};
 
 #[cfg(feature = "highcode")]
 pub use qingke_rt_macros::highcode;

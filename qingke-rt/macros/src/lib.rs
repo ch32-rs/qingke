@@ -96,3 +96,57 @@ pub fn highcode(_args: TokenStream, input: TokenStream) -> TokenStream {
     )
     .into()
 }
+
+/// Marks a function as an interrupt handler
+#[proc_macro_attribute]
+pub fn interrupt(_args: TokenStream, input: TokenStream) -> TokenStream {
+    let mut f = parse_macro_input!(input as ItemFn);
+
+    // check the function arguments
+    if !f.sig.inputs.is_empty() {
+        return parse::Error::new(
+            f.sig.inputs.last().unwrap().span(),
+            "`#[interrupt]` function accepts no arguments",
+        )
+        .to_compile_error()
+        .into();
+    }
+
+    let ident = f.sig.ident.clone();
+    let ident_s = &ident.clone();
+
+    let valid_signature = f.sig.constness.is_none()
+        && f.vis == Visibility::Inherited
+        && f.sig.abi.is_none()
+        && f.sig.generics.params.is_empty()
+        && f.sig.generics.where_clause.is_none()
+        && f.sig.variadic.is_none()
+        && match f.sig.output {
+            ReturnType::Default => true,
+            ReturnType::Type(_, ref ty) => match **ty {
+                Type::Tuple(ref tuple) => tuple.elems.is_empty(),
+                Type::Never(..) => true,
+                _ => false,
+            },
+        }
+        && f.sig.inputs.len() <= 1;
+
+    if !valid_signature {
+        return parse::Error::new(
+            f.span(),
+            "`#[interrupt]` handlers must have signature `[unsafe] fn() [-> !]`",
+        )
+        .to_compile_error()
+        .into();
+    }
+
+    // let inner_fn_export_name =  &f.sig.ident;
+
+    quote!(
+        #[link_section = ".trap"]
+        #[export_name = #ident_s]
+        #[allow(non_snake_case)]
+        #f
+    )
+    .into()
+}
