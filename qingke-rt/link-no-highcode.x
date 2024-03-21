@@ -57,6 +57,7 @@ SECTIONS
         KEEP(*(SORT_NONE(.handle_reset)))
         *(.init.rust)
         *(.text .text.*)
+        *(.highcode .highcode.*);
     } >FLASH AT>FLASH
 
     .rodata : ALIGN(4)
