@@ -76,6 +76,13 @@ pub fn is_disabled(irq: u8) -> bool {
 }
 
 #[inline]
+pub fn is_pending(irq: u8) -> bool {
+    let offset = (irq / 32) as isize;
+    let bit = irq % 32;
+    unsafe { ptr::read_volatile(PFIC_IPR0.offset(offset)) & (1 << bit) != 0 }
+}
+
+#[inline]
 pub unsafe fn pend_interrupt(irq: u8) {
     let offset = (irq / 32) as isize;
     let bit = irq % 32;
