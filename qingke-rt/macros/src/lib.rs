@@ -113,7 +113,7 @@ pub fn interrupt(_args: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     let ident = f.sig.ident.clone();
-    let ident_s = &ident.clone();
+    let ident_s = ident.to_string();
 
     let valid_signature = f.sig.constness.is_none()
         && f.vis == Visibility::Inherited
