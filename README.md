@@ -1,4 +1,14 @@
-# qingke
+# qingke & qingke-rt
+
+[![Crates.io][badge-license]][crates]
+[![Crates.io][badge-version]][crates]
+[![docs.rs][badge-docsrs]][docsrs]
+
+[badge-license]: https://img.shields.io/crates/l/qingke?style=for-the-badge
+[badge-version]: https://img.shields.io/crates/v/qingke?style=for-the-badge
+[badge-docsrs]: https://img.shields.io/docsrs/qingke?style=for-the-badge
+[crates]: https://crates.io/crates/qingke
+[docsrs]: https://docs.rs/qingke
 
 Low level access to WCH's QingKe RISC-V processors.
 
