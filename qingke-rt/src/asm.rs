@@ -76,6 +76,14 @@ handle_reset:
     bltu a0, a1, 1b
 2:
     ",
+    // enable floating point and interrupt
+    #[cfg(any(riscvf, riscvd))]
+    "
+    li t0, 0x4000 // bit 14 is FS most significant bit
+    li t2, 0x2000 // bit 13 is FS least significant bit
+    csrrc x0, mstatus, t0
+    csrrs x0, mstatus, t2
+    ",
     "
     jal _setup_interrupts
 
