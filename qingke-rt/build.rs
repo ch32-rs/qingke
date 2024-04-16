@@ -1,5 +1,5 @@
+use std::collections::HashSet;
 use std::path::PathBuf;
-use std::{collections::HashSet, io};
 use std::{env, fs};
 
 /// Parse the target RISC-V architecture and returns its bit width and the extension set
