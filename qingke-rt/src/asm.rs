@@ -76,6 +76,11 @@ handle_reset:
     bltu a0, a1, 1b
 2:
     ",
+
+    "
+    jal _setup_interrupts
+    ",
+
     // enable floating point and interrupt
     #[cfg(any(riscvf, riscvd))]
     "
@@ -84,9 +89,8 @@ handle_reset:
     csrrc x0, mstatus, t0
     csrrs x0, mstatus, t2
     ",
-    "
-    jal _setup_interrupts
 
+    "
     la t0, main
     csrw mepc, t0
 

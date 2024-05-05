@@ -45,8 +45,8 @@ pub static __EXCEPTIONS: [Option<unsafe extern "C" fn()>; 12] = [
     Some(LoadMisaligned),
     Some(LoadFault), // 5, Not accurate, async
     Some(StoreMisaligned),
-    Some(StoreFault), // 7, Not accurate, async
-    Some(UserEnvCall),
+    Some(StoreFault),  // 7, Not accurate, async
+    Some(UserEnvCall), // not available for Qingke V2
     None,
     None,
     Some(MachineEnvCall),
@@ -175,31 +175,49 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         fn _start_trap();
     }
 
-    // corecfgr(0xbc0): 流水线控制位 & 动态预测控制位
-    // corecfgr: Pipeline control bit & Dynamic prediction control
-
     // enable hardware stack push
-    // intsyscr: Open nested interrupts and hardware stack functions
+    // intsyscr(0x804): Open nested interrupts and hardware stack functions
     // 0x3 both nested interrupts and hardware stack
     // 0x1 only hardware stack
 
-    // Restore state
+    #[cfg(feature = "v2")]
+    {
+        asm!(
+            "
+            li t0, 0x80
+            csrw mstatus, t0
+            li t0, 0x3
+            csrw 0x804, t0
+            "
+        );
+
+        // Qingke V2's mtvec must be 1KB aligned
+        mtvec::write(0x00000000, TrapMode::Direct);
+    }
+
+    // return to user mode
+    // mstate
     // - use 0x88 to set mpp=0, return to user mode
     // - use 0x1888 to set mpp=3, return to machine mode
 
-    // return to user mode
-    asm!(
-        "
-        li t0, 0x1f
-        csrw 0xbc0, t0
-        li t0, 0x3
-        csrw 0x804, t0
-        li t0, 0x88
-        csrs mstatus, t0
-        "
-    );
-    mtvec::write(_start_trap as usize, TrapMode::Direct);
-    gintenr::set_enable();
+    // corecfgr(0xbc0): 流水线控制位 & 动态预测控制位
+    // corecfgr(0xbc0): Pipeline control bit & Dynamic prediction control
+
+    #[cfg(not(feature = "v2"))]
+    {
+        asm!(
+            "
+            li t0, 0x1f
+            csrw 0xbc0, t0
+            li t0, 0x3
+            csrw 0x804, t0
+            li t0, 0x88
+            csrs mstatus, t0
+            "
+        );
+        gintenr::set_enable();
+        mtvec::write(_start_trap as usize, TrapMode::Direct);
+    }
 }
 
 #[doc(hidden)]
