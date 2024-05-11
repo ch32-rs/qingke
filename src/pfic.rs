@@ -1,4 +1,6 @@
 //! PFIC, Programmable Fast Interrupt Controller
+//!
+//! V3 core seems older, so it has different VTF configuration
 #![allow(unused)]
 
 use core::ptr;
@@ -18,9 +20,10 @@ const PFIC_CFGR: *mut u32 = 0xE000E048 as *mut u32;
 /// 中断全局状态寄存器
 const PFIC_GISR: *mut u32 = 0xE000E04C as *mut u32;
 
-/// VTF ID configure register
-/// 免表中断 ID, 8-bit for each entry, max 4 entries
-const PFIC_VTFIDR: *mut u8 = 0xE000E050 as *mut u8;
+// /// VTF ID configure register
+// /// 免表中断 ID, 8-bit for each entry, max 4 entries
+// const PFIC_VTFIDR: *mut u32 = 0xE000E050 as *mut u32;
+
 /// VTF interrupt x offset address register
 /// 免表中断地址寄存器
 const PFIC_VTFADDRR0: *mut u32 = 0xE000E060 as *mut u32;
@@ -115,4 +118,52 @@ pub unsafe fn set_priority(irq: u8, priority: u8) {
 pub fn get_priority(irq: u8) -> u8 {
     let offset = irq as isize;
     unsafe { ptr::read_volatile(PFIC_IPRIOR0.offset(offset)) }
+}
+
+/// Enable VTF0, VTFBADDRR will be overwritten
+#[cfg(feature = "v3")]
+pub unsafe fn enable_vtf(channel: u8, irq: u8, address: u32) {
+    assert!(channel < 4, "VTF channel must be less than 4");
+    const PFIC_VTFBADDRR: *mut u32 = 0xE000E044 as *mut u32;
+
+    unsafe {
+        ptr::write_volatile(PFIC_VTFBADDRR, address & 0xF000_0000);
+
+        ptr::write_volatile(
+            PFIC_VTFADDRR0.offset(channel as isize),
+            ((irq as u32) << 24) | (address & 0x00FF_FFFF),
+        );
+    }
+}
+
+#[cfg(feature = "v3")]
+pub unsafe fn disable_vtf(channel: u8) {
+    assert!(channel < 4, "VTF channel must be less than 4");
+    let val = ptr::read_volatile(PFIC_VTFADDRR0.offset(channel as isize));
+    ptr::write_volatile(PFIC_VTFADDRR0.offset(channel as isize), val & 0x00FF_FFFF);
+}
+
+#[cfg(not(feature = "v3"))]
+pub unsafe fn enable_vtf(channel: u8, irq: u8, address: u32) {
+    assert!(channel < 4, "VTF channel must be less than 4");
+
+    // [31:24]: Numbering of VTF interrupt 3
+    // [23:16]: Numbering of VTF interrupt 2
+    // [15:8]: Numbering of VTF interrupt 1
+    // [7:0]: Numbering of VTF interrupt 0
+    const PFIC_VTFIDR: *mut u32 = 0xE000E050 as *mut u32;
+
+    ptr::write_volatile(PFIC_VTFIDR, (irq as u32) << ((channel as u32) * 8));
+
+    ptr::write_volatile(
+        PFIC_VTFADDRR0.offset(channel as isize),
+        address | 0x0000_0001,
+    );
+}
+
+#[cfg(not(feature = "v3"))]
+pub unsafe fn disable_vtf(channel: u8) {
+    assert!(channel < 4, "VTF channel must be less than 4");
+    let val = ptr::read_volatile(PFIC_VTFADDRR0.offset(channel as isize));
+    ptr::write_volatile(PFIC_VTFADDRR0.offset(channel as isize), val & 0xFFFF_FFFE);
 }
