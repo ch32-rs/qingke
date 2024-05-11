@@ -66,7 +66,7 @@ SECTIONS
     } >RAM AT>FLASH
 
     /* FIXME: if highcode section is large enough, then .init jump might be impossible to jump to .handle_reset */
-    .text :
+    .text : ALIGN(4)
     {
         . = ALIGN(4);
         KEEP(*(SORT_NONE(.handle_reset)))

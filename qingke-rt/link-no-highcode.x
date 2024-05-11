@@ -50,7 +50,7 @@ SECTIONS
         *(.trap .trap.rust)
     } >FLASH AT>FLASH
 
-    .text :
+    .text : ALIGN(4)
     {
         . = ALIGN(4);
         KEEP(*(SORT_NONE(.handle_reset)))

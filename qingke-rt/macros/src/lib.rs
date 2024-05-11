@@ -224,7 +224,7 @@ pub fn interrupt(args: TokenStream, input: TokenStream) -> TokenStream {
         #[export_name = #ident_s]
         #[naked]
         unsafe extern "C" fn #wrapper_ident() {
-            asm!("
+            core::arch::asm!("
                 addi sp, sp, -4
                 sw ra, 0(sp)
                 jal {irq_impl}

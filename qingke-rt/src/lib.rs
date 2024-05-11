@@ -5,19 +5,14 @@
 //! - The structure of core interrupt handlers is different
 //! - Hardware stack push is available, so no need to push manually
 use qingke::{
-    register::{
-        gintenr,
-        mtvec::{self, TrapMode},
-    },
+    register::mtvec::{self, TrapMode},
     riscv::register::mcause,
 };
-
-pub use qingke_rt_macros::{entry, interrupt};
-
 #[cfg(feature = "highcode")]
 pub use qingke_rt_macros::highcode;
+pub use qingke_rt_macros::{entry, interrupt};
 
-use core::arch::{asm, global_asm};
+use core::arch::global_asm;
 
 mod asm;
 
@@ -126,9 +121,9 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     // 0x1 only hardware stack
 
     // Qingke V2A, V2C
-    #[cfg(target_feature = "v2")]
+    #[cfg(feature = "v2")]
     {
-        asm!(
+        core::arch::asm!(
             "
             li t0, 0x80
             csrw mstatus, t0
@@ -141,7 +136,7 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     // Qingke V3A
     #[cfg(feature = "v3")]
     {
-        asm!(
+        core::arch::asm!(
             "
             li t0, 0x88
             csrs mstatus, t0
@@ -161,7 +156,7 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         not(any(feature = "v2", feature = "v3", feature = "v4"))     // Fallback condition
     ))]
     {
-        asm!(
+        core::arch::asm!(
             "
             li t0, 0x1f
             csrw 0xbc0, t0
@@ -171,7 +166,7 @@ unsafe extern "C" fn qingke_setup_interrupts() {
             csrs mstatus, t0
             "
         );
-        gintenr::set_enable();
+        qingke::register::gintenr::set_enable();
     }
 
     // Qingke V2's mtvec must be 1KB aligned.
