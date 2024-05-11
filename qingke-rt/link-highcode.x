@@ -26,18 +26,22 @@ PROVIDE(NonMaskableInt = DefaultHandler);
 PROVIDE(SysTick = DefaultHandler);
 PROVIDE(Software = DefaultHandler);
 
+PROVIDE(Exception = _exception_handler);
+
 PROVIDE(DefaultHandler = DefaultInterruptHandler);
 PROVIDE(ExceptionHandler = DefaultExceptionHandler);
 
 /* PROVIDE(__EXTERNAL_INTERRUPTS = __DEFAULT_EXTERNAL_INTERRUPTS);*/
 
 /* # Interrupt vectors */
+EXTERN(__CORE_INTERRUPTS);
 EXTERN(__EXTERNAL_INTERRUPTS); /* `static` variable similar to `__EXCEPTIONS` */
 
 ENTRY(_start)
 
 SECTIONS
 {
+    /* init jump opcode */
     .init :
     {
         . = ALIGN(4);
@@ -45,13 +49,15 @@ SECTIONS
         . = ALIGN(4);
     } >FLASH AT>FLASH
 
+    /* highcode section will be copied to RAM offset 0x0 */
     .highcode : ALIGN(4)
     {
         _highcode_lma = LOADADDR(.highcode);
         PROVIDE(_highcode_vma_start = .);
+        LONG(0x00000000); /* Placeholder for the first vector */
+        KEEP(*(.vector_table.core_interrupts));
+        KEEP(*(.vector_table.external_interrupts));
         KEEP(*(.vector_table.exceptions));
-        *(.vector_table.interrupts);
-        KEEP(*(.rodata.__EXTERNAL_INTERRUPTS));
         *(.trap .trap.rust)
         *(.highcode);
         *(.highcode.*);
@@ -59,6 +65,7 @@ SECTIONS
         PROVIDE(_highcode_vma_end = .);
     } >RAM AT>FLASH
 
+    /* FIXME: if highcode section is large enough, then .init jump might be impossible to jump to .handle_reset */
     .text :
     {
         . = ALIGN(4);

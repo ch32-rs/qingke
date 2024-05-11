@@ -1,7 +1,10 @@
+use std::iter;
+
 use proc_macro2::Span;
 use proc_macro_error::proc_macro_error;
 use syn::{
-    parse, parse_macro_input, spanned::Spanned, ItemFn, PathArguments, ReturnType, Type, Visibility,
+    parse, parse_macro_input, spanned::Spanned, Ident, ItemFn, PathArguments, ReturnType, Type,
+    Visibility,
 };
 
 use proc_macro::TokenStream;
@@ -97,10 +100,53 @@ pub fn highcode(_args: TokenStream, input: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Marks a function as an interrupt handler
+/// Marks a function as an interrupt handler. (Wrapping as a mret function)
+///
+/// Note that Rust has also introduced the `riscv-interrupt-m` and `riscv-interrupt-s` ABI, which
+/// are used for machine and supervisor mode interrupts, respectively. These ABIs can also be used for
+/// Qingke cores, yet they add additional register saving and restoring that is not necessary.
+///
+/// Usage:
+/// ```ignore
+/// #[interrupt]
+/// fn UART0() { ... }
+///
+/// #[interrupt(core)]
+/// fn SysTick() { ... }
+/// ```
 #[proc_macro_attribute]
-pub fn interrupt(_args: TokenStream, input: TokenStream) -> TokenStream {
-    let f = parse_macro_input!(input as ItemFn);
+pub fn interrupt(args: TokenStream, input: TokenStream) -> TokenStream {
+    use syn::{AttributeArgs, Meta, NestedMeta};
+
+    let mut f = parse_macro_input!(input as ItemFn);
+
+    let is_core_irq = if args.is_empty() {
+        false
+    } else {
+        let args: AttributeArgs = parse_macro_input!(args as AttributeArgs);
+        if args.len() != 1 {
+            return parse::Error::new(
+                Span::call_site(),
+                "This attribute accepts no arguments or a single 'core' argument",
+            )
+            .to_compile_error()
+            .into();
+        }
+
+        if let NestedMeta::Meta(Meta::Path(ref p)) = args[0] {
+            if let Some(ident) = p.get_ident() {
+                if ident != "core" {
+                    return parse::Error::new(
+                        ident.span(),
+                        "Only core interrupts are allowed without arguments",
+                    )
+                    .to_compile_error()
+                    .into();
+                }
+            }
+        }
+        true
+    };
 
     // check the function arguments
     if !f.sig.inputs.is_empty() {
@@ -140,12 +186,56 @@ pub fn interrupt(_args: TokenStream, input: TokenStream) -> TokenStream {
         .into();
     }
 
-    // let inner_fn_export_name =  &f.sig.ident;
+    let ident = f.sig.ident.clone();
+
+    // This will be overwritten by `export_name` in linking process, i.e. name of the interrupt
+    let wrapper_ident = Ident::new(&format!("{}_naked_wrapper", f.sig.ident), Span::call_site());
+
+    f.sig.ident = Ident::new(&format!("__qingke_rt_{}", f.sig.ident), Span::call_site());
+
+    let wrapped_ident = &f.sig.ident;
+
+    let stmts = f.block.stmts.clone();
+    // check irq names
+    if is_core_irq {
+        f.block.stmts = iter::once(
+            syn::parse2(quote! {{
+                // Check that this interrupt actually exists
+                ::qingke_rt::CoreInterrupt::#ident;
+            }})
+            .unwrap(),
+        )
+        .chain(stmts)
+        .collect();
+    } else {
+        f.block.stmts = iter::once(
+            syn::parse2(quote! {{
+                // Check that this interrupt actually exists
+                crate::pac::interrupt::#ident;
+            }})
+            .unwrap(),
+        )
+        .chain(stmts)
+        .collect();
+    }
 
     quote!(
-        #[link_section = ".trap"]
+        #[doc(hidden)]
         #[export_name = #ident_s]
-        #[allow(non_snake_case)]
+        #[naked]
+        unsafe extern "C" fn #wrapper_ident() {
+            asm!("
+                addi sp, sp, -4
+                sw ra, 0(sp)
+                jal {irq_impl}
+                lw ra, 0(sp)
+                addi sp, sp, 4
+                mret",
+                options(noreturn),
+                irq_impl = sym #wrapped_ident
+            );
+        }
+
         #f
     )
     .into()

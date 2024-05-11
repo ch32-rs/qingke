@@ -26,28 +26,27 @@ PROVIDE(NonMaskableInt = DefaultHandler);
 PROVIDE(SysTick = DefaultHandler);
 PROVIDE(Software = DefaultHandler);
 
+PROVIDE(Exception = _exception_handler);
+
 PROVIDE(DefaultHandler = DefaultInterruptHandler);
 PROVIDE(ExceptionHandler = DefaultExceptionHandler);
 
 /* # Interrupt vectors */
+EXTERN(__CORE_INTERRUPTS);
 EXTERN(__EXTERNAL_INTERRUPTS); /* `static` variable similar to `__EXCEPTIONS` */
 
 ENTRY(_start)
 
 SECTIONS
 {
-    .init :
+    .vector_table ORIGIN(FLASH) :
     {
-        . = ALIGN(4);
         KEEP(*(SORT_NONE(.init)))
         . = ALIGN(4);
-    } >FLASH AT>FLASH
-
-    .trap :
-    {
-        . = ALIGN(4);
+        /* core interrupts table's first entry is omitted, occupied by the init jump instruction */
+        KEEP(*(.vector_table.core_interrupts));
+        KEEP(*(.vector_table.external_interrupts));
         KEEP(*(.vector_table.exceptions));
-        KEEP(*(.vector_table.interrupts));
         *(.trap .trap.rust)
     } >FLASH AT>FLASH
 
