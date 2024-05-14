@@ -8,12 +8,13 @@ documentation = "https://docs.rs/qingke"
 homepage = "https://github.com/ch32-rs/qingke"
 categories = ["embedded", "no-std", "hardware-support"]
 license = "MIT/Apache-2.0"
-version = "0.2.0"
+version = "0.2.1" # for rt and macros
 edition = "2021"
 
 [package]
 name = "qingke"
-version.workspace = true
+# version.workspace = true
+version = "0.2.0"
 edition.workspace = true
 authors.workspace = true
 repository.workspace = true

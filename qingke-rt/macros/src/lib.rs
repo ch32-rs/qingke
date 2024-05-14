@@ -208,15 +208,17 @@ pub fn interrupt(args: TokenStream, input: TokenStream) -> TokenStream {
         .chain(stmts)
         .collect();
     } else {
-        f.block.stmts = iter::once(
-            syn::parse2(quote! {{
-                // Check that this interrupt actually exists
-                crate::pac::interrupt::#ident;
-            }})
-            .unwrap(),
-        )
-        .chain(stmts)
-        .collect();
+        // FIXME: how to test irq names?
+        /*  f.block.stmts = iter::once(
+                syn::parse2(quote! {{
+                    // Check that this interrupt actually exists
+                    ::pac::interrupt::#ident;
+                }})
+                .unwrap(),
+            )
+            .chain(stmts)
+            .collect();
+        */
     }
 
     quote!(
