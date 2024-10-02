@@ -167,3 +167,16 @@ pub unsafe fn disable_vtf(channel: u8) {
     let val = ptr::read_volatile(PFIC_VTFADDRR0.offset(channel as isize));
     ptr::write_volatile(PFIC_VTFADDRR0.offset(channel as isize), val & 0xFFFF_FFFE);
 }
+
+pub unsafe fn wfi_to_wfe(v: bool) {
+    critical_section::with(|_| {
+        let mut val = ptr::read_volatile(PFIC_SCTLR);
+        // 0x8 is WFITOWFE bit
+        if v {
+            val |= 0x8;
+        } else {
+            val &= !0x8;
+        }
+        ptr::write_volatile(PFIC_SCTLR, val);
+    });
+}

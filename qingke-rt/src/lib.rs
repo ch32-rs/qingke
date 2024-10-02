@@ -176,6 +176,8 @@ unsafe extern "C" fn qingke_setup_interrupts() {
 
     #[cfg(not(feature = "highcode"))]
     mtvec::write(0x00000000, TrapMode::VectoredAddress);
+
+    qingke::pfic::wfi_to_wfe(true);
 }
 
 #[doc(hidden)]
