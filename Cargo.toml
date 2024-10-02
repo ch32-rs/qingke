@@ -29,14 +29,15 @@ readme = "README.md"
 [dependencies]
 bit_field = "0.10.2"
 riscv = "0.11.1"
-critical-section = { version = "1.1.2", features = [
+critical-section = { version = "1.1.3", features = [
     "restore-state-u8",
 ], optional = true }
-defmt = { version = "0.3.6", optional = true }
+defmt = { version = "0.3.8", optional = true }
 
 [features]
 critical-section-impl = ["dep:critical-section"]
 defmt = ["dep:defmt"]
+v3 = []
 
 [package.metadata.docs.rs]
 targets = ["riscv32imac-unknown-none-elf"]
