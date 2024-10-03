@@ -76,6 +76,10 @@ fn main() {
     let target = env::var("TARGET").unwrap();
     let cargo_flags = env::var("CARGO_ENCODED_RUSTFLAGS").unwrap();
     // set configuration flags depending on the target
+
+    println!("cargo::rustc-check-cfg=cfg(riscvf)");
+    println!("cargo::rustc-check-cfg=cfg(riscvd)");
+
     if target.starts_with("riscv") {
         println!("cargo:rustc-cfg=riscv");
 
