@@ -16,5 +16,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Prepare Rust Target
+      run: rustup target add riscv32imac-unknown-none-elf
     - name: Build
       run: cargo build --all --target riscv32imac-unknown-none-elf
