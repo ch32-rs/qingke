@@ -15,7 +15,7 @@ readme = "README.md"
 
 [features]
 v2 = []
-v3 = []
+v3 = ["qingke/v3"]
 v4 = []
 # v5 is not released yet
 # v5 = []
