@@ -17,15 +17,20 @@ pub fn read() -> usize {
 
 #[inline]
 pub unsafe fn write(bits: usize) {
-    asm!("csrs 0x800, {}", in(reg) bits);
+    asm!("csrw 0x800, {}", in(reg) bits);
 }
 
 #[inline]
 pub unsafe fn set_enable() {
-    write(0x08)
+    let mask = 0x8;
+    asm!("csrs 0x800, {}", in(reg) mask);
 }
 
 #[inline]
-pub unsafe fn set_disable() {
-    write(0x00)
+/// Disable interrupt and return the old `GINTENR` value
+pub fn set_disable() -> usize {
+    let prev: usize;
+    let mask = 0x8usize;
+    unsafe { asm!("csrrc {}, 0x800, {}", out(reg) prev, in(reg) mask) };
+    prev
 }
