@@ -168,6 +168,7 @@ pub unsafe fn disable_vtf(channel: u8) {
     ptr::write_volatile(PFIC_VTFADDRR0.offset(channel as isize), val & 0xFFFF_FFFE);
 }
 
+#[cfg(feature = "critical-section-impl")]
 pub unsafe fn wfi_to_wfe(v: bool) {
     critical_section::with(|_| {
         let mut val = ptr::read_volatile(PFIC_SCTLR);

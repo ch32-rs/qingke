@@ -15,7 +15,7 @@ readme = "README.md"
 
 [features]
 v2 = []
-v3 = []
+v3 = ["qingke/v3"]
 v4 = []
 # v5 is not released yet
 # v5 = []
@@ -24,7 +24,7 @@ highcode = []
 
 [dependencies]
 qingke-rt-macros = { path = "./macros", version = "0.3" }
-qingke = { path = "../", version = "0.3" }
+qingke = { path = "../", version = "0.3", features = ["critical-section-impl"] }
 
 [package.metadata.docs.rs]
 targets = ["riscv32imac-unknown-none-elf"]
