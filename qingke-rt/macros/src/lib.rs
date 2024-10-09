@@ -226,14 +226,13 @@ pub fn interrupt(args: TokenStream, input: TokenStream) -> TokenStream {
         #[export_name = #ident_s]
         #[naked]
         unsafe extern "C" fn #wrapper_ident() {
-            core::arch::asm!("
+            core::arch::naked_asm!("
                 addi sp, sp, -4
                 sw ra, 0(sp)
                 jal {irq_impl}
                 lw ra, 0(sp)
                 addi sp, sp, 4
                 mret",
-                options(noreturn),
                 irq_impl = sym #wrapped_ident
             );
         }
