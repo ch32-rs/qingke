@@ -159,7 +159,7 @@ pub fn interrupt(args: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     let ident = f.sig.ident.clone();
-    let ident_s = ident.to_string();
+    let interrupt = ident.to_string();
 
     let valid_signature = f.sig.constness.is_none()
         && f.vis == Visibility::Inherited
@@ -189,7 +189,7 @@ pub fn interrupt(args: TokenStream, input: TokenStream) -> TokenStream {
     let ident = f.sig.ident.clone();
 
     // This will be overwritten by `export_name` in linking process, i.e. name of the interrupt
-    let wrapper_ident = Ident::new(&format!("{}_naked_wrapper", f.sig.ident), Span::call_site());
+    // let wrapper_ident = Ident::new(&format!("{}_naked_wrapper", f.sig.ident), Span::call_site());
 
     f.sig.ident = Ident::new(&format!("__qingke_rt_{}", f.sig.ident), Span::call_site());
 
@@ -221,22 +221,32 @@ pub fn interrupt(args: TokenStream, input: TokenStream) -> TokenStream {
         */
     }
 
-    quote!(
-        #[doc(hidden)]
-        #[export_name = #ident_s]
-        #[naked]
-        unsafe extern "C" fn #wrapper_ident() {
-            core::arch::naked_asm!("
-                addi sp, sp, -4
-                sw ra, 0(sp)
-                jal {irq_impl}
-                lw ra, 0(sp)
-                addi sp, sp, 4
-                mret",
-                irq_impl = sym #wrapped_ident
-            );
-        }
+    let wrapped_name = wrapped_ident.to_string();
 
+    let start_interrupt = format!(
+        r#"
+core::arch::global_asm!(
+    ".section .trap, \"ax\"
+    .align 2
+    .global {interrupt}
+    {interrupt}:
+        addi sp, sp, -4
+        sw ra, 0(sp)
+        jal {wrapped_name}
+        lw ra, 0(sp)
+        addi sp, sp, 4
+        mret
+");"#
+    );
+
+    let start_interrupt_asm: proc_macro2::TokenStream = start_interrupt.parse().unwrap();
+
+    quote!(
+        #start_interrupt_asm
+
+        #[allow(non_snake_case)]
+        #[no_mangle]
+        #[link_section = ".trap.rust"]
         #f
     )
     .into()
