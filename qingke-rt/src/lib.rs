@@ -120,12 +120,24 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     // 0x3 both nested interrupts and hardware stack
     // 0x1 only hardware stack
 
+    // for user mode: mstatus = 0x80
+    // mpp(m-mode previous privilege) = 0b00 = U
+    // mpie(m-mode previous interrupt enable) = 0b1
+    // mie(m-mode interrupt enable) = 0b0
+    // interrupts will be enabled when mret at the end of handle_reset
+    // jumps to main (mret does mie = mpie)
+    // for machine mode: mstatus = 0x1880
+    // mpp = 0b11
+    // mpie = 0b1
+    // mie = 0b0
+
     // Qingke V2A, V2C
+    // (does not have user mode)
     #[cfg(feature = "v2")]
     {
         core::arch::asm!(
             "
-            li t0, 0x80
+            li t0, 0x1880
             csrw mstatus, t0
             li t0, 0x3
             csrw 0x804, t0
@@ -136,18 +148,21 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     // Qingke V3A
     #[cfg(feature = "v3")]
     {
+        #[cfg(feature = "u-mode")]
         core::arch::asm!(
             "
-            li t0, 0x88
+            li t0, 0x80
             csrs mstatus, t0
-        "
+            "
+        );
+        #[cfg(not(feature = "u-mode"))]
+        core::arch::asm!(
+            "
+            li t0, 0x1880
+            csrs mstatus, t0
+            "
         );
     }
-
-    // return to user mode
-    // mstate
-    // - use 0x88 to set mpp=0, return to user mode
-    // - use 0x1888 to set mpp=3, return to machine mode
 
     // corecfgr(0xbc0): 流水线控制位 & 动态预测控制位
     // corecfgr(0xbc0): Pipeline control bit & Dynamic prediction control
@@ -156,13 +171,25 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         not(any(feature = "v2", feature = "v3", feature = "v4"))     // Fallback condition
     ))]
     {
+        #[cfg(feature = "u-mode")]
         core::arch::asm!(
             "
             li t0, 0x1f
             csrw 0xbc0, t0
             li t0, 0x3
             csrw 0x804, t0
-            li t0, 0x88
+            li t0, 0x80
+            csrs mstatus, t0
+            "
+        );
+        #[cfg(not(feature = "u-mode"))]
+        core::arch::asm!(
+            "
+            li t0, 0x1f
+            csrw 0xbc0, t0
+            li t0, 0x3
+            csrw 0x804, t0
+            li t0, 0x1880
             csrs mstatus, t0
             "
         );
