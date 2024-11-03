@@ -8,7 +8,7 @@ documentation = "https://docs.rs/qingke"
 homepage = "https://github.com/ch32-rs/qingke"
 categories = ["embedded", "no-std", "hardware-support"]
 license = "MIT/Apache-2.0"
-version = "0.4.0" # for rt and macros
+version = "0.5.0" # for rt and macros
 edition = "2021"
 
 [package]
@@ -37,6 +37,7 @@ defmt = { version = "0.3.8", optional = true }
 critical-section-impl = ["dep:critical-section"]
 defmt = ["dep:defmt"]
 v3 = []
+unsafe-trust-wch-atomics = []
 
 [package.metadata.docs.rs]
 targets = ["riscv32imac-unknown-none-elf"]
