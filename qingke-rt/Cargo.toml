@@ -25,8 +25,8 @@ u-mode = []
 highcode = []
 
 [dependencies]
-qingke-rt-macros = { path = "./macros" }
-qingke = { path = "../", features = ["critical-section-impl"] }
+qingke-rt-macros = {  version = "0.5.0", path = "./macros" }
+qingke = { version = "0.5.0", path = "../", features = ["critical-section-impl"] }
 
 [package.metadata.docs.rs]
-targets = ["riscv32imac-unknown-none-elf"]
+targets = ["riscv32imc-unknown-none-elf"]

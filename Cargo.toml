@@ -40,4 +40,4 @@ v3 = []
 unsafe-trust-wch-atomics = []
 
 [package.metadata.docs.rs]
-targets = ["riscv32imac-unknown-none-elf"]
+targets = ["riscv32imc-unknown-none-elf"]
