@@ -153,7 +153,11 @@ pub unsafe fn enable_vtf(channel: u8, irq: u8, address: u32) {
     // [7:0]: Numbering of VTF interrupt 0
     const PFIC_VTFIDR: *mut u32 = 0xE000E050 as *mut u32;
 
-    ptr::write_volatile(PFIC_VTFIDR, (irq as u32) << ((channel as u32) * 8));
+    let irq_bits = (irq as u32) << ((channel as u32) * 8);
+    let irq_mask = 0xFF << ((channel as u32) * 8);
+
+    let irq = ptr::read_volatile(PFIC_VTFIDR);
+    ptr::write_volatile(PFIC_VTFIDR, irq & !irq_mask | irq_bits);
 
     ptr::write_volatile(
         PFIC_VTFADDRR0.offset(channel as isize),
