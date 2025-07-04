@@ -77,14 +77,14 @@ SECTIONS
         PROVIDE( _edata = .);
     } >RAM AT>FLASH
 
-    .bss : ALIGN(4)
+    .bss (NOLOAD) : ALIGN(4)
     {
         PROVIDE( _sbss = .);
         *(.sbss .sbss.* .bss .bss.*);
         PROVIDE( _ebss = .);
-    } >RAM AT>FLASH
+    } >RAM
 
-    .stack ORIGIN(RAM)+LENGTH(RAM) :
+    .stack ORIGIN(RAM)+LENGTH(RAM) (NOLOAD) :
     {
         . = ALIGN(4);
         PROVIDE(_stack_top = . );
