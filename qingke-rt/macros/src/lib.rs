@@ -60,7 +60,7 @@ pub fn entry(args: TokenStream, input: TokenStream) -> TokenStream {
 
     quote!(
         #[allow(non_snake_case)]
-        #[export_name = "main"]
+        #[unsafe(export_name = "main")]
         #(#attrs)*
         pub #unsafety fn __risc_v_rt__main(#args) -> ! {
             #(#stmts)*
@@ -89,7 +89,7 @@ pub fn highcode(_args: TokenStream, input: TokenStream) -> TokenStream {
     let f = parse_macro_input!(input as ItemFn);
 
     let section = quote! {
-        #[link_section = ".highcode"]
+        #[unsafe(link_section = ".highcode")]
         #[inline(never)] // make certain function is not inlined
     };
 
@@ -245,8 +245,8 @@ core::arch::global_asm!(
         #start_interrupt_asm
 
         #[allow(non_snake_case)]
-        #[no_mangle]
-        #[link_section = ".trap.rust"]
+        #[unsafe(no_mangle)]
+        #[unsafe(link_section = ".trap.rust")]
         #f
     )
     .into()
