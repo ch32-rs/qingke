@@ -39,6 +39,7 @@ critical-section-impl = ["dep:critical-section"]
 defmt = ["dep:defmt"]
 v2 = []
 v3 = []
+v3a = ["v3"]
 v4 = []
 unsafe-trust-wch-atomics = []
 
