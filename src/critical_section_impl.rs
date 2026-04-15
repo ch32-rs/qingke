@@ -6,8 +6,9 @@ set_impl!(SingleHartCriticalSection);
 unsafe impl Impl for SingleHartCriticalSection {
     unsafe fn acquire() -> RawRestoreState {
         cfg_if::cfg_if! {
-            if #[cfg(feature = "v2")] {
+            if #[cfg(any(feature = "v2", feature = "v3a"))] {
                 // CH32V003 (qingke_v2) does not have gintenr register
+                // v3a has "invalid" gintenr register - according to QingKeV3_Processor_Manual.pdf page 26
                 // Use standard RISC-V mstatus.MIE instead
                 let mut mstatus: usize;
                 unsafe { core::arch::asm!("csrrci {}, mstatus, 0b1000", out(reg) mstatus) };
@@ -24,7 +25,7 @@ unsafe impl Impl for SingleHartCriticalSection {
         // Only re-enable interrupts if they were enabled before the critical section.
         if irq_state {
             cfg_if::cfg_if! {
-                if #[cfg(feature = "v2")] {
+                if #[cfg(any(feature = "v2", feature = "v3a"))] {
                     unsafe { core::arch::asm!("csrsi mstatus, 0b1000") };
                 } else {
                     use crate::register::gintenr;
