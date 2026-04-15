@@ -144,7 +144,7 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         );
     }
 
-    // Qingke V3A
+    // Qingke V3A, V3B, V3C, V3F, V3V
     #[cfg(feature = "v3")]
     unsafe {
         #[cfg(feature = "u-mode")]
@@ -195,15 +195,27 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         qingke::register::gintenr::set_enable();
     }
 
+    // V3A: no VectoredAddress support, use Direct mode + software dispatch.
+    #[cfg(feature = "v3a")]
+    unsafe {
+        unsafe extern "C" {
+            fn _unified_trap_handler();
+        }
+        mtvec::write(_unified_trap_handler as *const () as usize, TrapMode::Direct);
+    }
+
     // Qingke V2's mtvec must be 1KB aligned.
 
+    #[cfg(not(feature = "v3a"))]
     unsafe {
         #[cfg(feature = "highcode")]
         mtvec::write(0x20000000, TrapMode::VectoredAddress);
 
         #[cfg(not(feature = "highcode"))]
         mtvec::write(0x00000000, TrapMode::VectoredAddress);
+    }
 
+    unsafe {
         qingke::pfic::wfi_to_wfe(true);
     }
 }
@@ -242,6 +254,53 @@ global_asm!(
         lw ra, 0(sp)
         addi sp, sp, 4
         mret
+    "#
+);
+
+// V3A software dispatch handler for Direct mode.
+// Reads mcause, looks up handler address from the vector table, and jumps to it.
+#[cfg(all(feature = "v3a", feature = "highcode"))]
+global_asm!(
+    r#"
+        .section .trap, "ax"
+        .global _unified_trap_handler
+        .align 2
+    _unified_trap_handler:
+        csrr t0, mcause
+        bgez t0, _exception_handler
+        slli t0, t0, 1
+        srli t0, t0, 1
+        slli t0, t0, 2
+        la t1, _highcode_vma_start
+        add t0, t0, t1
+        lw t0, 0(t0)
+        beqz t0, 1f
+        jr t0
+    1:
+        la t0, DefaultInterruptHandler
+        jr t0
+    "#
+);
+
+#[cfg(all(feature = "v3a", not(feature = "highcode")))]
+global_asm!(
+    r#"
+        .section .trap, "ax"
+        .global _unified_trap_handler
+        .align 2
+    _unified_trap_handler:
+        csrr t0, mcause
+        bgez t0, _exception_handler
+        slli t0, t0, 1
+        srli t0, t0, 1
+        slli t0, t0, 2
+        la t1, _start
+        add t0, t0, t1
+        lw t0, 0(t0)
+        beqz t0, 1f
+        jr t0
+    1:
+        j DefaultInterruptHandler
     "#
 );
 
