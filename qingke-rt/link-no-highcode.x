@@ -84,6 +84,11 @@ SECTIONS
         PROVIDE( _ebss = .);
     } >RAM
 
+    .uninit (NOLOAD) : ALIGN(4)
+    {
+        *(.uninit .uninit.*);
+    } >RAM
+
     .stack ORIGIN(RAM)+LENGTH(RAM) (NOLOAD) :
     {
         . = ALIGN(4);
