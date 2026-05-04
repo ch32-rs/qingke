@@ -67,10 +67,21 @@ fn main() {
         fs::write(out_dir.join("link.x"), include_bytes!("link-no-highcode.x")).unwrap();
     }
 
+    // V2 requires the vector table to be 1KB-aligned
+    let has_v2 = env::var("CARGO_FEATURE_V2").is_ok();
+    let asserts: &[u8] = match (has_v2, has_highcode_feature) {
+        (true, true) => include_bytes!("assert-v2-align-highcode.x"),
+        (true, false) => include_bytes!("assert-v2-align-no-highcode.x"),
+        _ => b"",
+    };
+    fs::write(out_dir.join("assert-align.x"), asserts).unwrap();
+
     println!("cargo:rustc-link-search={}", out_dir.display());
 
     println!("cargo:rerun-if-changed=link-highcode.x");
     println!("cargo:rerun-if-changed=link-no-highcode.x");
+    println!("cargo:rerun-if-changed=assert-v2-align-highcode.x");
+    println!("cargo:rerun-if-changed=assert-v2-align-no-highcode.x");
     println!("cargo:rerun-if-changed=build.rs");
 
     let target = env::var("TARGET").unwrap();

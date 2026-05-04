@@ -104,4 +104,4 @@ SECTIONS
     .eh_frame_hdr (INFO) : { *(.eh_frame_hdr) }
 }
 
-ASSERT(_start % 1024 == 0, "vector table must be 1KB aligned for Qingke V2");
+INCLUDE assert-align.x
