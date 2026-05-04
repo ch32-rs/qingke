@@ -121,7 +121,7 @@ pub fn get_priority(irq: u8) -> u8 {
 }
 
 /// Enable VTF0, VTFBADDRR will be overwritten
-#[cfg(feature = "v3")]
+#[cfg(feature = "_v3")]
 pub unsafe fn enable_vtf(channel: u8, irq: u8, address: u32) {
     assert!(channel < 4, "VTF channel must be less than 4");
     const PFIC_VTFBADDRR: *mut u32 = 0xE000E044 as *mut u32;
@@ -136,14 +136,14 @@ pub unsafe fn enable_vtf(channel: u8, irq: u8, address: u32) {
     }
 }
 
-#[cfg(feature = "v3")]
+#[cfg(feature = "_v3")]
 pub unsafe fn disable_vtf(channel: u8) {
     assert!(channel < 4, "VTF channel must be less than 4");
     let val = ptr::read_volatile(PFIC_VTFADDRR0.offset(channel as isize));
     ptr::write_volatile(PFIC_VTFADDRR0.offset(channel as isize), val & 0x00FF_FFFF);
 }
 
-#[cfg(not(feature = "v3"))]
+#[cfg(not(feature = "_v3"))]
 pub unsafe fn enable_vtf(channel: u8, irq: u8, address: u32) {
     assert!(channel < 4, "VTF channel must be less than 4");
 
@@ -163,7 +163,7 @@ pub unsafe fn enable_vtf(channel: u8, irq: u8, address: u32) {
     }
 }
 
-#[cfg(not(feature = "v3"))]
+#[cfg(not(feature = "_v3"))]
 pub unsafe fn disable_vtf(channel: u8) {
     assert!(channel < 4, "VTF channel must be less than 4");
     unsafe {

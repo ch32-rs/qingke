@@ -15,7 +15,9 @@ readme = "README.md"
 
 [features]
 v2 = ["qingke/v2"]
-v3 = ["qingke/v3"]
+_v3 = []
+v3a = ["qingke/v3a", "_v3"]
+v3b = ["qingke/v3b", "_v3"]
 v4 = ["qingke/v4"]
 
 u-mode = []
