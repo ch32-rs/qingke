@@ -145,7 +145,7 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     }
 
     // Qingke V3A, V3B, V3C, V3F, V3V
-    #[cfg(feature = "v3")]
+    #[cfg(feature = "_v3")]
     unsafe {
         #[cfg(feature = "u-mode")]
         core::arch::asm!(
@@ -167,7 +167,7 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     // corecfgr(0xbc0): Pipeline control bit & Dynamic prediction control
     #[cfg(any(
         feature = "v4",
-        not(any(feature = "v2", feature = "v3", feature = "v4"))     // Fallback condition
+        not(any(feature = "v2", feature = "_v3", feature = "v4"))     // Fallback condition
     ))]
     unsafe {
         #[cfg(feature = "u-mode")]

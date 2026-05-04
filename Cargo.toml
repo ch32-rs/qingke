@@ -38,8 +38,9 @@ defmt = { version = "1.0.1", optional = true }
 critical-section-impl = ["dep:critical-section"]
 defmt = ["dep:defmt"]
 v2 = []
-v3 = []
-v3a = ["v3"]
+_v3 = []
+v3a = ["_v3"]
+v3b = ["_v3"]
 v4 = []
 unsafe-trust-wch-atomics = []
 
