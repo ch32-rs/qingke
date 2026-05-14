@@ -45,6 +45,11 @@ v3f = ["_v3"]
 v4 = []
 _v5 = []
 v5f = ["_v5"]
+# Multi-core PFIC extensions (HartId, wake_other_core).
+# Only meaningful on chips whose PFIC implements HART_ID and WAKEIP0/1,
+# currently CH32H417 (V3F + V5F). Writing WAKEIP0/1 on chips without
+# them is undefined behavior, hence the opt-in gate.
+dual-core = []
 unsafe-trust-wch-atomics = []
 
 [package.metadata.docs.rs]
