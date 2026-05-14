@@ -41,6 +41,7 @@ v2 = []
 _v3 = []
 v3a = ["_v3"]
 v3b = ["_v3"]
+v3f = ["_v3"]
 v4 = []
 unsafe-trust-wch-atomics = []
 
