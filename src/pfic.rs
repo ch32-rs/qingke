@@ -48,6 +48,13 @@ const PFIC_IPRIOR0: *mut u8 = 0xE000E400 as *mut u8;
 /// 系统控制寄存器
 const PFIC_SCTLR: *mut u32 = 0xE000ED10 as *mut u32;
 
+/// Wake-up instruction pointer register for hart 0 (C0)
+/// 内核 C0 唤醒指令指针寄存器
+const PFIC_WAKEIP0: *mut u32 = 0xE000E720 as *mut u32;
+/// Wake-up instruction pointer register for hart 1 (C1)
+/// 内核 C1 唤醒指令指针寄存器
+const PFIC_WAKEIP1: *mut u32 = 0xE000E724 as *mut u32;
+
 #[inline]
 pub unsafe fn enable_interrupt(irq: u8) {
     let offset = (irq / 32) as isize;
@@ -184,4 +191,84 @@ pub unsafe fn wfi_to_wfe(v: bool) {
         }
         ptr::write_volatile(PFIC_SCTLR, val);
     });
+}
+
+/// Identifies the current QingKe hart in a multi-core PFIC.
+///
+/// Read from `PFIC_SCTLR[23:16]` (HART_ID field). Only the LSB is
+/// meaningful — the upper bits of that field are reserved.
+///
+/// On single-core chips this always reads as [`HartId::C0`]. On
+/// dual-core chips such as CH32H417, the primary boot core (V3F) is
+/// `C0` and the secondary core (V5F) is `C1`.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[repr(u8)]
+pub enum HartId {
+    /// Core 0 (V3F on CH32H417)
+    C0 = 0,
+    /// Core 1 (V5F on CH32H417)
+    C1 = 1,
+}
+
+impl HartId {
+    /// Read the current hart ID from `PFIC_SCTLR`.
+    #[inline]
+    pub fn current() -> Self {
+        let sctlr = unsafe { ptr::read_volatile(PFIC_SCTLR) };
+        if (sctlr & (1 << 16)) != 0 {
+            HartId::C1
+        } else {
+            HartId::C0
+        }
+    }
+
+    /// Return the *other* hart's ID.
+    #[inline]
+    pub const fn other(self) -> Self {
+        match self {
+            HartId::C0 => HartId::C1,
+            HartId::C1 => HartId::C0,
+        }
+    }
+
+    /// 0 or 1, suitable for indexing per-hart resources.
+    #[inline]
+    pub const fn to_index(self) -> usize {
+        self as usize
+    }
+}
+
+/// Wake the *other* hart from its deep-sleep lock and set its entry PC
+/// to `entry`.
+///
+/// Rust equivalent of WCH SDK's `NVIC_WakeUp_V3F` / `NVIC_WakeUp_V5F`.
+/// It writes `entry` into the other hart's `PFIC_WAKEIPx` register —
+/// because `entry` is required to be 1KB-aligned, the write also
+/// clears the `SHUTDOWN_x` bit (bit 0), releasing the hart from its
+/// deep-sleep lock — then sets `PFIC_SCTLR.SENDEVENT` (bit 5) to
+/// deliver the wake event.
+///
+/// On single-core chips this writes to a reserved register and has no
+/// observable effect.
+///
+/// # Safety
+/// - `entry` must be 1KB-aligned (bottom 10 bits zero); debug builds
+///   panic otherwise.
+/// - The image at `entry` must already be programmed in Flash and be
+///   reachable from the other hart's address space.
+/// - Typically called once by the primary hart (`C0`) during boot,
+///   before any cross-core synchronization protocol begins.
+#[inline]
+pub unsafe fn wake_other_core(entry: u32) {
+    debug_assert!(entry & 0x3FF == 0, "entry must be 1KB-aligned");
+    let wakeip = match HartId::current().other() {
+        HartId::C0 => PFIC_WAKEIP0,
+        HartId::C1 => PFIC_WAKEIP1,
+    };
+    unsafe {
+        ptr::write_volatile(wakeip, entry);
+        let sctlr = ptr::read_volatile(PFIC_SCTLR);
+        ptr::write_volatile(PFIC_SCTLR, sctlr | (1 << 5));
+    }
 }
