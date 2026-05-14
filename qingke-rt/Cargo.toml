@@ -18,6 +18,7 @@ v2 = ["qingke/v2"]
 _v3 = []
 v3a = ["qingke/v3a", "_v3"]
 v3b = ["qingke/v3b", "_v3"]
+v3f = ["qingke/v3f", "_v3"]
 v4 = ["qingke/v4"]
 
 u-mode = []
