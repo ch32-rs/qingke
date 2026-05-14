@@ -43,6 +43,8 @@ v3a = ["_v3"]
 v3b = ["_v3"]
 v3f = ["_v3"]
 v4 = []
+_v5 = []
+v5f = ["_v5"]
 unsafe-trust-wch-atomics = []
 
 [package.metadata.docs.rs]
