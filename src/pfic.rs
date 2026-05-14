@@ -48,11 +48,18 @@ const PFIC_IPRIOR0: *mut u8 = 0xE000E400 as *mut u8;
 /// 系统控制寄存器
 const PFIC_SCTLR: *mut u32 = 0xE000ED10 as *mut u32;
 
-/// Wake-up instruction pointer register for hart 0 (C0)
-/// 内核 C0 唤醒指令指针寄存器
+/// Wake-up instruction pointer register for hart 0 (C0).
+/// 内核 C0 唤醒指令指针寄存器.
+///
+/// Chip-specific multi-core extension — currently CH32H417 only.
+/// Not documented in any generic QingKe IP manual (V2/V3/V4/V5);
+/// see CH32H417 RM V1.7 §4.7.5.51.
+#[cfg(feature = "dual-core")]
 const PFIC_WAKEIP0: *mut u32 = 0xE000E720 as *mut u32;
-/// Wake-up instruction pointer register for hart 1 (C1)
-/// 内核 C1 唤醒指令指针寄存器
+/// Wake-up instruction pointer register for hart 1 (C1).
+/// 内核 C1 唤醒指令指针寄存器.
+/// See [`PFIC_WAKEIP0`] for caveats.
+#[cfg(feature = "dual-core")]
 const PFIC_WAKEIP1: *mut u32 = 0xE000E724 as *mut u32;
 
 #[inline]
@@ -195,12 +202,15 @@ pub unsafe fn wfi_to_wfe(v: bool) {
 
 /// Identifies the current QingKe hart in a multi-core PFIC.
 ///
-/// Read from `PFIC_SCTLR[23:16]` (HART_ID field). Only the LSB is
+/// Read from `PFIC_SCTLR[23:16]` (`HART_ID` field). Only the LSB is
 /// meaningful — the upper bits of that field are reserved.
 ///
-/// On single-core chips this always reads as [`HartId::C0`]. On
-/// dual-core chips such as CH32H417, the primary boot core (V3F) is
-/// `C0` and the secondary core (V5F) is `C1`.
+/// `HART_ID` is documented in the QingKe V5 IP manual §8.1 and the
+/// CH32H417 RM §4.7.5.58, but is **not** defined in the QingKe
+/// V2 / V3 / V4 manuals, so this type is gated behind the
+/// `dual-core` feature. On CH32H417 the primary boot core (V3F) is
+/// `C0` and the secondary (V5F) is `C1`.
+#[cfg(feature = "dual-core")]
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
@@ -211,6 +221,7 @@ pub enum HartId {
     C1 = 1,
 }
 
+#[cfg(feature = "dual-core")]
 impl HartId {
     /// Read the current hart ID from `PFIC_SCTLR`.
     #[inline]
@@ -249,8 +260,9 @@ impl HartId {
 /// deep-sleep lock — then sets `PFIC_SCTLR.SENDEVENT` (bit 5) to
 /// deliver the wake event.
 ///
-/// On single-core chips this writes to a reserved register and has no
-/// observable effect.
+/// Gated behind `dual-core` because `WAKEIPx` are not documented in
+/// any generic QingKe IP manual — they are a chip-level multi-core
+/// extension currently known only on CH32H417.
 ///
 /// # Safety
 /// - `entry` must be 1KB-aligned (bottom 10 bits zero); debug builds
@@ -259,6 +271,7 @@ impl HartId {
 ///   reachable from the other hart's address space.
 /// - Typically called once by the primary hart (`C0`) during boot,
 ///   before any cross-core synchronization protocol begins.
+#[cfg(feature = "dual-core")]
 #[inline]
 pub unsafe fn wake_other_core(entry: u32) {
     debug_assert!(entry & 0x3FF == 0, "entry must be 1KB-aligned");
