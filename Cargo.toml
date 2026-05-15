@@ -41,10 +41,16 @@ v2 = []
 _v3 = []
 v3a = ["_v3"]
 v3b = ["_v3"]
-v3f = ["_v3"]
+v3f = ["_v3", "_inestcr"]
 v4 = []
-_v5 = []
+_v5 = ["_inestcr"]
 v5f = ["_v5"]
+# CSR 0xBC1 (inestcr / interrupt nest control) is V5-only in the
+# generic QingKe IP family; it is also wired up on the CH32H417 V3F
+# extension. V2 / V3A / V3B / V4 raise an illegal-instruction trap
+# when 0xBC1 is accessed, so the register module is gated behind
+# this umbrella feature.
+_inestcr = []
 # Multi-core PFIC extensions (HartId, wake_other_core).
 # Only meaningful on chips whose PFIC implements HART_ID and WAKEIP0/1,
 # currently CH32H417 (V3F + V5F). Writing WAKEIP0/1 on chips without
