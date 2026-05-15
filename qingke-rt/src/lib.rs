@@ -168,9 +168,9 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     // Qingke V3F (CH32H417 primary core).
     // Unlike V3A/V3B, V3F's WCH startup writes the full set of QingKe
     // control CSRs: pipeline/branch-prediction config (corecfgr 0xBC0),
-    // 2-level nest control (0xBC1), interrupt nesting + hardware-stack
-    // enable (intsyscr 0x804), and a full `csrw` of mstatus selecting
-    // U-mode return + FP-Dirty. Values mirror
+    // 2-level nest control (inestcr 0xBC1), interrupt nesting +
+    // hardware-stack enable (intsyscr 0x804), and a full `csrw` of
+    // mstatus selecting U-mode return + FP-Dirty. Values mirror
     // `startup_ch32h417_v3f.S:541-551`.
     //
     // Note: the post-block FP-enable code below (`#[cfg(any(riscvf,
@@ -179,12 +179,12 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     // Dirty automatically.
     #[cfg(feature = "v3f")]
     unsafe {
+        use qingke::register::inestcr::{self, NestLevel};
+        inestcr::write(NestLevel::Two as usize);
         core::arch::asm!(
             "
             li t0, 0x123703E1
             csrw 0xBC0, t0
-            li t0, 0x01
-            csrw 0xBC1, t0
             li t0, 0x07
             csrw 0x804, t0
             li t0, 0x6088
@@ -209,12 +209,12 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     // will reset FS from Dirty to Initial.
     #[cfg(feature = "v5f")]
     unsafe {
+        use qingke::register::inestcr::{self, NestLevel};
+        inestcr::write(NestLevel::Eight as usize);
         core::arch::asm!(
             "
             li t0, 0x1237B3E0
             csrw 0xBC0, t0
-            li t0, 0x07
-            csrw 0xBC1, t0
             li t0, 0x0F
             csrw 0x804, t0
             li t0, 0x6088

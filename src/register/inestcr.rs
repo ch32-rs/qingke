@@ -3,9 +3,15 @@
 //! QingKe-specific CSR at address 0xBC1. Controls the maximum
 //! interrupt nest depth and exposes nest status / overflow flags.
 //!
-//! Documented in QingKe V5 IP manual §8.1 (and used by V3F/V5F on
-//! CH32H417). V3 and earlier manuals don't describe this register
-//! in detail, but V3F's startup writes it the same way.
+//! **Availability**: only on cores that gate the `_inestcr` feature
+//! in, currently `v3f` (CH32H417 V3F extension) and any `_v5`
+//! variant. The V2 / V3A / V3B / V4 generic QingKe IP manuals do
+//! not document this CSR and accessing 0xBC1 on those cores raises
+//! an illegal-instruction trap.
+//!
+//! Field layout follows QingKe V5 IP manual §8.1. The V3F variant
+//! supports the same layout but in practice only the lower nest
+//! levels (≤ 2) are useful given V3F's 2-level pipeline.
 
 use bit_field::BitField;
 use core::arch::asm;
