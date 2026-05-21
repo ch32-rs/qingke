@@ -207,6 +207,14 @@ pub unsafe fn wfi_to_wfe(v: bool) {
 /// Read from `PFIC_SCTLR[23:16]` (`HART_ID` field). Only the LSB is
 /// meaningful — the upper bits of that field are reserved.
 ///
+/// On CH32H417 the standard RISC-V `mhartid` CSR is also valid and
+/// returns the same value (`0` on V3F, `1` on V5F — the WCH SDK's
+/// FreeRTOS port uses `mhartid` directly to pick per-hart `mtimecmp`
+/// registers). We read SCTLR instead because the PFIC-based hart id
+/// is documented as a QingKe-family convention and is portable to
+/// other dual-core QingKe parts that may not implement `mhartid` in
+/// the standard way.
+///
 /// `HART_ID` is documented in the QingKe V5 IP manual §8.1 and the
 /// CH32H417 RM §4.7.5.58, but is **not** defined in the QingKe
 /// V2 / V3 / V4 manuals, so this type is gated behind the
