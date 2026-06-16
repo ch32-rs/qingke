@@ -113,6 +113,13 @@ pub fn highcode(_args: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// #[interrupt(core)]
 /// fn SysTick() { ... }
+///
+/// // Opt out of `.highcode` (RAM) placement when the `highcode` feature is
+/// // enabled — handler stays in flash like the rest of `.text`. No effect
+/// // when the feature is off (everything is in flash already). Composes
+/// // with `core`: `#[interrupt(core, lowcode)]` or `#[interrupt(lowcode, core)]`.
+/// #[interrupt(lowcode)]
+/// fn UART1() { ... }
 /// ```
 #[proc_macro_attribute]
 pub fn interrupt(args: TokenStream, input: TokenStream) -> TokenStream {
@@ -120,33 +127,65 @@ pub fn interrupt(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let mut f = parse_macro_input!(input as ItemFn);
 
-    let is_core_irq = if args.is_empty() {
-        false
-    } else {
+    let mut is_core_irq = false;
+    let mut is_lowcode_irq = false;
+
+    if !args.is_empty() {
         let args: AttributeArgs = parse_macro_input!(args as AttributeArgs);
-        if args.len() != 1 {
+        if args.len() > 2 {
             return parse::Error::new(
                 Span::call_site(),
-                "This attribute accepts no arguments or a single 'core' argument",
+                "expected no arguments or one or two of: 'core', 'lowcode'",
             )
             .to_compile_error()
             .into();
         }
 
-        if let NestedMeta::Meta(Meta::Path(ref p)) = args[0] {
-            if let Some(ident) = p.get_ident() {
-                if ident != "core" {
+        for arg in &args {
+            let NestedMeta::Meta(Meta::Path(p)) = arg else {
+                return parse::Error::new(
+                    arg.span(),
+                    "expected bare identifier: 'core' or 'lowcode'",
+                )
+                .to_compile_error()
+                .into();
+            };
+            let Some(ident) = p.get_ident() else {
+                return parse::Error::new(
+                    p.span(),
+                    "expected bare identifier: 'core' or 'lowcode'",
+                )
+                .to_compile_error()
+                .into();
+            };
+            match ident.to_string().as_str() {
+                "core" => {
+                    if is_core_irq {
+                        return parse::Error::new(ident.span(), "duplicate 'core' argument")
+                            .to_compile_error()
+                            .into();
+                    }
+                    is_core_irq = true;
+                }
+                "lowcode" => {
+                    if is_lowcode_irq {
+                        return parse::Error::new(ident.span(), "duplicate 'lowcode' argument")
+                            .to_compile_error()
+                            .into();
+                    }
+                    is_lowcode_irq = true;
+                }
+                _ => {
                     return parse::Error::new(
                         ident.span(),
-                        "Only core interrupts are allowed without arguments",
+                        "expected 'core' or 'lowcode'",
                     )
                     .to_compile_error()
                     .into();
                 }
             }
         }
-        true
-    };
+    }
 
     // check the function arguments
     if !f.sig.inputs.is_empty() {
@@ -223,10 +262,24 @@ pub fn interrupt(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let wrapped_name = wrapped_ident.to_string();
 
+    // Default placement is `.trap` / `.trap.rust`, which the `highcode`
+    // feature's linker script captures into `.highcode` (RAM). The `lowcode`
+    // arg switches both halves to `.text.{name}` so they're caught by
+    // `*(.text .text.*)` and stay in flash even with the feature on; no-op
+    // when the feature is off (both already land in flash).
+    let (trampoline_section, body_section) = if is_lowcode_irq {
+        (
+            format!(".text.{interrupt}"),
+            format!(".text.{wrapped_name}"),
+        )
+    } else {
+        (".trap".to_string(), ".trap.rust".to_string())
+    };
+
     let start_interrupt = format!(
         r#"
 core::arch::global_asm!(
-    ".section .trap, \"ax\"
+    ".section {trampoline_section}, \"ax\"
     .align 2
     .global {interrupt}
     {interrupt}:
@@ -246,7 +299,7 @@ core::arch::global_asm!(
 
         #[allow(non_snake_case)]
         #[unsafe(no_mangle)]
-        #[unsafe(link_section = ".trap.rust")]
+        #[unsafe(link_section = #body_section)]
         #f
     )
     .into()

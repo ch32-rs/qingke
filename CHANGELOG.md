@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `#[interrupt(lowcode)]` opts a single handler out of `.highcode` (RAM) placement when the `highcode` feature is enabled, keeping its body in flash. Composes with `core`. No-op when the `highcode` feature is off.
+
 ## [0.7.0] - 2026-05-04
 
 ### Added
