@@ -8,10 +8,10 @@ pub fn read() -> usize {
     ans
 }
 
-/// Write to corecfgr
+/// Write to corecfgr (full register write).
 #[inline]
 pub unsafe fn write(bits: usize) {
-    unsafe { asm!("csrs 0xBC0, {}", in(reg) bits) };
+    unsafe { asm!("csrw 0xBC0, {}", in(reg) bits) };
 }
 
 /// Write 0x1f to ??? (in EVT code)

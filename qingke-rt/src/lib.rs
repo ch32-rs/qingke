@@ -144,8 +144,10 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         );
     }
 
-    // Qingke V3A, V3B, V3C, V3F, V3V
-    #[cfg(feature = "_v3")]
+    // Qingke V3A, V3B, V3C, V3V (non-V3F V3 variants).
+    // Leaves corecfgr / intsyscr / nest-level at reset defaults; only
+    // OR's a couple of bits into mstatus.
+    #[cfg(all(feature = "_v3", not(feature = "v3f")))]
     unsafe {
         #[cfg(feature = "u-mode")]
         core::arch::asm!(
@@ -163,11 +165,69 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         );
     }
 
+    // Qingke V3F (CH32H417 primary core).
+    // Unlike V3A/V3B, V3F's WCH startup writes the full set of QingKe
+    // control CSRs: pipeline/branch-prediction config (corecfgr 0xBC0),
+    // 2-level nest control (inestcr 0xBC1), interrupt nesting +
+    // hardware-stack enable (intsyscr 0x804), and a full `csrw` of
+    // mstatus selecting U-mode return + FP-Dirty. Values mirror
+    // `startup_ch32h417_v3f.S:541-551`.
+    //
+    // Note: the post-block FP-enable code below (`#[cfg(any(riscvf,
+    // riscvd))]`) will subsequently downgrade FS from Dirty (0b11) to
+    // Initial (0b01); the first FP register write bumps it back to
+    // Dirty automatically.
+    #[cfg(feature = "v3f")]
+    unsafe {
+        use qingke::register::inestcr::{self, NestLevel};
+        inestcr::write(NestLevel::Two as usize);
+        core::arch::asm!(
+            "
+            li t0, 0x123703E1
+            csrw 0xBC0, t0
+            li t0, 0x07
+            csrw 0x804, t0
+            li t0, 0x6088
+            csrw mstatus, t0
+            "
+        );
+    }
+
+    // Qingke V5F (CH32H417 secondary core).
+    // V5F is a deeper / wider core than V3F: 8-level interrupt nesting
+    // (vs V3F's 2), pmtcfg=11 in intsyscr (vs V3F's 01), and extra
+    // pipeline tuning bits in corecfgr (NLP_EN + a couple of reserved
+    // defaults). Values mirror `startup_ch32h417_v5f.S:481-491`.
+    //
+    // Note: ICache and PMP setup that the WCH SDK does immediately
+    // after this block (using `_cache_beg` / `_cache_end` linker
+    // symbols) is intentionally NOT performed here — it requires the
+    // user's linker script to define those symbols. ICache support
+    // will land as a separate opt-in feature.
+    //
+    // Same FS-downgrade note as v3f applies: the riscvf/d post-block
+    // will reset FS from Dirty to Initial.
+    #[cfg(feature = "v5f")]
+    unsafe {
+        use qingke::register::inestcr::{self, NestLevel};
+        inestcr::write(NestLevel::Eight as usize);
+        core::arch::asm!(
+            "
+            li t0, 0x1237B3E0
+            csrw 0xBC0, t0
+            li t0, 0x0F
+            csrw 0x804, t0
+            li t0, 0x6088
+            csrw mstatus, t0
+            "
+        );
+    }
+
     // corecfgr(0xbc0): 流水线控制位 & 动态预测控制位
     // corecfgr(0xbc0): Pipeline control bit & Dynamic prediction control
     #[cfg(any(
         feature = "v4",
-        not(any(feature = "v2", feature = "_v3", feature = "v4"))     // Fallback condition
+        not(any(feature = "v2", feature = "_v3", feature = "_v5", feature = "v4"))     // Fallback condition
     ))]
     unsafe {
         #[cfg(feature = "u-mode")]
