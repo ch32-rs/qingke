@@ -34,7 +34,7 @@ handle_reset:
     .option norelax
     la gp, __global_pointer$
     .option pop
-    la sp, _stack_top
+    la sp, _stack_start
     ",
     // load highcode from flash to ram
     #[cfg(feature = "highcode")]
