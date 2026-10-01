@@ -8,7 +8,7 @@ documentation = "https://docs.rs/qingke"
 homepage = "https://github.com/ch32-rs/qingke"
 categories = ["embedded", "no-std", "hardware-support"]
 license = "MIT/Apache-2.0"
-version = "0.7.0" # for rt and macros
+version = "0.8.0" # for rt and macros
 edition = "2024"
 
 [package]
@@ -24,6 +24,7 @@ license.workspace = true
 description = "Low level access to WCH's QingKe RISC-V processors"
 keywords = ["qingke", "wch", "riscv", "ch32v"]
 readme = "README.md"
+build = "build.rs"
 
 [dependencies]
 bit_field = "0.10.2"
@@ -37,26 +38,22 @@ defmt = { version = "1.0.1", optional = true }
 [features]
 critical-section-impl = ["dep:critical-section"]
 defmt = ["dep:defmt"]
-v2 = []
-_v3 = []
-v3a = ["_v3"]
-v3b = ["_v3"]
-v3f = ["_v3", "_inestcr"]
-v4 = []
-_v5 = ["_inestcr"]
-v5f = ["_v5"]
-# CSR 0xBC1 (inestcr / interrupt nest control) is V5-only in the
-# generic QingKe IP family; it is also wired up on the CH32H417 V3F
-# extension. V2 / V3A / V3B / V4 raise an illegal-instruction trap
-# when 0xBC1 is accessed, so the register module is gated behind
-# this umbrella feature.
-_inestcr = []
-# Multi-core PFIC extensions (HartId, wake_other_core).
-# Only meaningful on chips whose PFIC implements HART_ID and WAKEIP0/1,
-# currently CH32H417 (V3F + V5F). Writing WAKEIP0/1 on chips without
-# them is undefined behavior, hence the opt-in gate.
 dual-core = []
 unsafe-trust-wch-atomics = []
+
+# Leaf QingKe cores (match ch32-data `cores[].name` without the `qingke-` prefix).
+# Capability flags (`csr_*`, `dm_data_*`, `qingke_v3`, …) are set in `build.rs`.
+v2a = []
+v2c = []
+v3a = []
+v3b = []
+v3f = []
+v4a = []
+v4b = []
+v4c = []
+v4f = []
+v4j = []
+v5f = []
 
 [package.metadata.docs.rs]
 targets = ["riscv32imc-unknown-none-elf"]

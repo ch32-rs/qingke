@@ -3,9 +3,8 @@
 //! QingKe-specific CSR at address 0xBC1. Controls the maximum
 //! interrupt nest depth and exposes nest status / overflow flags.
 //!
-//! **Availability**: only on cores that gate the `_inestcr` feature
-//! in, currently `v3f` (CH32H417 V3F extension) and any `_v5`
-//! variant. The V2 / V3A / V3B / V4 generic QingKe IP manuals do
+//! **Availability**: only when the `csr_inestcr` cfg is set (`v3f`, `v5f`, …).
+//! The V2 / V3A / V3B / V4 generic QingKe IP manuals do
 //! not document this CSR and accessing 0xBC1 on those cores raises
 //! an illegal-instruction trap.
 //!

@@ -1,4 +1,5 @@
 #![no_std]
+#![allow(unexpected_cfgs)]
 //! # Differences vs the riscv-rt version
 //!
 //! - The structure of exception handlers is different
@@ -132,7 +133,7 @@ unsafe extern "C" fn qingke_setup_interrupts() {
 
     // Qingke V2A, V2C
     // (does not have user mode)
-    #[cfg(feature = "v2")]
+    #[cfg(qingke_v2)]
     unsafe {
         core::arch::asm!(
             "
@@ -147,7 +148,7 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     // Qingke V3A, V3B, V3C, V3V (non-V3F V3 variants).
     // Leaves corecfgr / intsyscr / nest-level at reset defaults; only
     // OR's a couple of bits into mstatus.
-    #[cfg(all(feature = "_v3", not(feature = "v3f")))]
+    #[cfg(all(qingke_v3, not(feature = "v3f")))]
     unsafe {
         #[cfg(feature = "u-mode")]
         core::arch::asm!(
@@ -223,11 +224,10 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         );
     }
 
-    // corecfgr(0xbc0): 流水线控制位 & 动态预测控制位
-    // corecfgr(0xbc0): Pipeline control bit & Dynamic prediction control
+    // corecfgr (0xBC0): pipeline control and branch prediction
     #[cfg(any(
-        feature = "v4",
-        not(any(feature = "v2", feature = "_v3", feature = "_v5", feature = "v4"))     // Fallback condition
+        qingke_v4,
+        not(any(qingke_v2, qingke_v3, qingke_v4, qingke_v5)) // Fallback when no leaf is selected
     ))]
     unsafe {
         #[cfg(feature = "u-mode")]

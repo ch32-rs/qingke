@@ -11,21 +11,16 @@ const PFIC_ISR0: *mut u32 = 0xE000E000 as *mut u32;
 const PFIC_IPR0: *mut u32 = 0xE000E020 as *mut u32;
 
 /// Interrupt priority threshold configure register
-/// 中断优先级阈值设置
 const PFIC_ITHRESDR: *mut u32 = 0xE000E040 as *mut u32;
 /// Interrupt configure register
-/// 中断配置寄存器
 const PFIC_CFGR: *mut u32 = 0xE000E048 as *mut u32;
 /// Interrupt global status register
-/// 中断全局状态寄存器
 const PFIC_GISR: *mut u32 = 0xE000E04C as *mut u32;
 
-// /// VTF ID configure register
-// /// 免表中断 ID, 8-bit for each entry, max 4 entries
+// /// VTF ID configure register (8-bit per entry, max 4 entries)
 // const PFIC_VTFIDR: *mut u32 = 0xE000E050 as *mut u32;
 
 /// VTF interrupt x offset address register
-/// 免表中断地址寄存器
 const PFIC_VTFADDRR0: *mut u32 = 0xE000E060 as *mut u32;
 const PFIC_VTFADDRR1: *mut u32 = 0xE000E064 as *mut u32;
 const PFIC_VTFADDRR2: *mut u32 = 0xE000E068 as *mut u32;
@@ -45,11 +40,9 @@ const PFIC_IACTR0: *mut u32 = 0xE000E300 as *mut u32;
 const PFIC_IPRIOR0: *mut u8 = 0xE000E400 as *mut u8;
 
 /// System control register
-/// 系统控制寄存器
 const PFIC_SCTLR: *mut u32 = 0xE000ED10 as *mut u32;
 
 /// Wake-up instruction pointer register for hart 0 (C0).
-/// 内核 C0 唤醒指令指针寄存器.
 ///
 /// Chip-specific multi-core extension — currently CH32H417 only.
 /// Not documented in any generic QingKe IP manual (V2/V3/V4/V5);
@@ -57,7 +50,7 @@ const PFIC_SCTLR: *mut u32 = 0xE000ED10 as *mut u32;
 #[cfg(feature = "dual-core")]
 const PFIC_WAKEIP0: *mut u32 = 0xE000E720 as *mut u32;
 /// Wake-up instruction pointer register for hart 1 (C1).
-/// 内核 C1 唤醒指令指针寄存器.
+///
 /// See [`PFIC_WAKEIP0`] for caveats.
 #[cfg(feature = "dual-core")]
 const PFIC_WAKEIP1: *mut u32 = 0xE000E724 as *mut u32;
@@ -135,7 +128,7 @@ pub fn get_priority(irq: u8) -> u8 {
 }
 
 /// Enable VTF0, VTFBADDRR will be overwritten
-#[cfg(feature = "_v3")]
+#[cfg(pfic_v3)]
 pub unsafe fn enable_vtf(channel: u8, irq: u8, address: u32) {
     assert!(channel < 4, "VTF channel must be less than 4");
     const PFIC_VTFBADDRR: *mut u32 = 0xE000E044 as *mut u32;
@@ -150,7 +143,7 @@ pub unsafe fn enable_vtf(channel: u8, irq: u8, address: u32) {
     }
 }
 
-#[cfg(feature = "_v3")]
+#[cfg(pfic_v3)]
 pub unsafe fn disable_vtf(channel: u8) {
     assert!(channel < 4, "VTF channel must be less than 4");
     unsafe {
@@ -159,7 +152,7 @@ pub unsafe fn disable_vtf(channel: u8) {
     }
 }
 
-#[cfg(not(feature = "_v3"))]
+#[cfg(not(pfic_v3))]
 pub unsafe fn enable_vtf(channel: u8, irq: u8, address: u32) {
     assert!(channel < 4, "VTF channel must be less than 4");
 
@@ -182,7 +175,7 @@ pub unsafe fn enable_vtf(channel: u8, irq: u8, address: u32) {
     }
 }
 
-#[cfg(not(feature = "_v3"))]
+#[cfg(not(pfic_v3))]
 pub unsafe fn disable_vtf(channel: u8) {
     assert!(channel < 4, "VTF channel must be less than 4");
     unsafe {

@@ -67,8 +67,13 @@ fn main() {
         fs::write(out_dir.join("link.x"), include_bytes!("link-no-highcode.x")).unwrap();
     }
 
-    // V2 requires the vector table to be 1KB-aligned
-    let has_v2 = env::var("CARGO_FEATURE_V2").is_ok();
+    mod cfgs {
+        include!("../build/cfgs.inc.rs");
+    }
+    cfgs::emit_selected_leaf_cfgs();
+
+    // QingKe V2 requires the vector table to be 1KB-aligned
+    let has_v2 = cfgs::leaf_enabled("v2a") || cfgs::leaf_enabled("v2c");
     let asserts: &[u8] = match (has_v2, has_highcode_feature) {
         (true, true) => include_bytes!("assert-v2-align-highcode.x"),
         (true, false) => include_bytes!("assert-v2-align-no-highcode.x"),
@@ -83,6 +88,7 @@ fn main() {
     println!("cargo:rerun-if-changed=assert-v2-align-highcode.x");
     println!("cargo:rerun-if-changed=assert-v2-align-no-highcode.x");
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=../build/cfgs.inc.rs");
 
     let target = env::var("TARGET").unwrap();
     let cargo_flags = env::var("CARGO_ENCODED_RUSTFLAGS").unwrap();

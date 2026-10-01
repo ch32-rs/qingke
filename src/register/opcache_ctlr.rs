@@ -6,7 +6,7 @@
 //! by either a virtual address or a way/set index.
 //!
 //! **Availability**: only on cores with ICache hardware, gated
-//! behind the `_v5` feature.
+//! behind the `csr_opcache_ctlr` cfg (`v5f`).
 //!
 //! Field layout follows QingKe V5 IP manual §8.1.
 

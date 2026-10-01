@@ -1,14 +1,18 @@
 //! QingKe extended CSRs
 
-#[cfg(feature = "_v5")]
+#[cfg(csr_cache_pmp_ovr)]
 pub mod cache_pmp_ovr;
-#[cfg(feature = "_v5")]
+#[cfg(csr_cache_strtg_ctlr)]
 pub mod cache_strtg_ctlr;
+#[cfg(csr_corecfgr)]
 pub mod corecfgr;
+#[cfg(csr_gintenr)]
 pub mod gintenr;
-#[cfg(feature = "_inestcr")]
+#[cfg(csr_inestcr)]
 pub mod inestcr;
+#[cfg(csr_intsyscr)]
 pub mod intsyscr;
+#[cfg(csr_mtvec)]
 pub mod mtvec;
-#[cfg(feature = "_v5")]
+#[cfg(csr_opcache_ctlr)]
 pub mod opcache_ctlr;

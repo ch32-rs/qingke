@@ -7,7 +7,7 @@
 //! cacheability instead of the address-space policy in 0xBC2.
 //!
 //! **Availability**: only on cores with ICache hardware, gated
-//! behind the `_v5` feature.
+//! behind the `csr_cache_pmp_ovr` cfg (`v5f`).
 //!
 //! Field layout follows QingKe V5 IP manual §8.1.
 

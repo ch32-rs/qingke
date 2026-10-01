@@ -5,7 +5,7 @@
 //! cacheability for four standard address spaces.
 //!
 //! **Availability**: only on cores with ICache hardware, gated
-//! behind the `_v5` feature. V2 / V3 / V4 do not have this CSR.
+//! behind the `csr_cache_strtg_ctlr` cfg (`v5f`). V2 / V3 / V4 do not have this CSR.
 //!
 //! Field layout follows QingKe V5 IP manual §8.1.
 
