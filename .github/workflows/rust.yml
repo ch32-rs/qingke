@@ -19,4 +19,7 @@ jobs:
     - name: Prepare Rust Target
       run: rustup target add riscv32imc-unknown-none-elf
     - name: Build
-      run: cargo build --all --target riscv32imc-unknown-none-elf
+      run: |
+        cargo build -p qingke-rt-macros
+        cargo build -p qingke --no-default-features --features v2a,unsafe-trust-wch-atomics,critical-section-impl --target riscv32imc-unknown-none-elf
+        cargo build -p qingke-rt --no-default-features --features v2a --target riscv32imc-unknown-none-elf

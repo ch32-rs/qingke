@@ -14,7 +14,6 @@ readme = "README.md"
 build = "build.rs"
 
 [features]
-default = ["v2a"]
 v2a = ["qingke/v2a"]
 v2c = ["qingke/v2c"]
 v3a = ["qingke/v3a"]

@@ -2,6 +2,7 @@
 // Leaf core features (`v2a`, `v3f`, …) live in each crate's `Cargo.toml`.
 // CSR availability uses the `csr_*` prefix (e.g. `csr_inestcr`, `csr_corecfgr`).
 
+use std::collections::HashSet;
 use std::env;
 
 struct LeafSpec {
@@ -130,34 +131,26 @@ const LEAVES: &[LeafSpec] = &[
     },
 ];
 
-const FAMILIES: &[&str] = &["qingke_v2", "qingke_v3", "qingke_v4", "qingke_v5"];
-
-const ALL_CAPS: &[&str] = &[
-    "dm_dataaddr_0f4",
-    "dm_dataaddr_380",
-    "dm_dataaddr_340",
-    "pfic_v3",
-    "cs_mstatus",
-    "csr_corecfgr",
-    "csr_intsyscr",
-    "csr_mtvec",
-    "csr_gintenr",
-    "csr_inestcr",
-    "csr_cache_strtg_ctlr",
-    "csr_cache_pmp_ovr",
-    "csr_opcache_ctlr",
-];
+fn sorted_unique<'a>(values: impl IntoIterator<Item = &'a str>) -> Vec<&'a str> {
+    let set: HashSet<&'a str> = values.into_iter().collect();
+    let mut out: Vec<&'a str> = set.into_iter().collect();
+    out.sort_unstable();
+    out
+}
 
 pub fn declare_check_cfgs() {
-    for family in FAMILIES {
+    let families = sorted_unique(LEAVES.iter().map(|spec| spec.family));
+    let caps = sorted_unique(LEAVES.iter().flat_map(|spec| spec.caps.iter().copied()));
+
+    for family in families {
         println!("cargo:rustc-check-cfg=cfg({})", family);
     }
-    for cap in ALL_CAPS {
+    for cap in caps {
         println!("cargo:rustc-check-cfg=cfg({})", cap);
     }
 }
 
-pub fn emit_selected_leaf_cfgs() -> Option<&'static str> {
+pub fn emit_selected_leaf_cfgs() {
     declare_check_cfgs();
 
     let mut selected: Vec<&LeafSpec> = Vec::new();
@@ -169,7 +162,12 @@ pub fn emit_selected_leaf_cfgs() -> Option<&'static str> {
     }
 
     match selected.len() {
-        0 => None,
+        0 => {
+            panic!(
+                "qingke: enable exactly one leaf core feature on this package \
+                 (v2a, v3f, v5f, …); see Cargo.toml [features]"
+            );
+        }
         1 => {
             let spec = selected[0];
             println!("cargo:rustc-cfg={}", spec.family);
@@ -177,7 +175,6 @@ pub fn emit_selected_leaf_cfgs() -> Option<&'static str> {
                 println!("cargo:rustc-cfg={}", cap);
             }
             println!("cargo:rerun-if-changed=build/cfgs.inc.rs");
-            Some(spec.leaf)
         }
         _ => {
             let names: Vec<_> = selected.iter().map(|s| s.leaf).collect();
