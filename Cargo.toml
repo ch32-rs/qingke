@@ -42,7 +42,7 @@ dual-core = []
 unsafe-trust-wch-atomics = []
 
 # Leaf QingKe cores (match ch32-data `cores[].name` without the `qingke-` prefix).
-# Capability flags (`csr_*`, `dm_data_*`, `qingke_v3`, …) are set in `build.rs`.
+# Capability flags (`csr_*`, `dm_dataaddr_*`, `qingke_v3`, …) are set in `build.rs`.
 v2a = []
 v2c = []
 v3a = []

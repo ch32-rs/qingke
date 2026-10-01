@@ -14,18 +14,18 @@ const LEAVES: &[LeafSpec] = &[
     LeafSpec {
         leaf: "v2a",
         family: "qingke_v2",
-        caps: &["dm_data_f4", "cs_mstatus", "csr_corecfgr", "csr_intsyscr", "csr_mtvec"],
+        caps: &["dm_dataaddr_0f4", "cs_mstatus", "csr_corecfgr", "csr_intsyscr", "csr_mtvec"],
     },
     LeafSpec {
         leaf: "v2c",
         family: "qingke_v2",
-        caps: &["dm_data_f4", "cs_mstatus", "csr_corecfgr", "csr_intsyscr", "csr_mtvec"],
+        caps: &["dm_dataaddr_0f4", "cs_mstatus", "csr_corecfgr", "csr_intsyscr", "csr_mtvec"],
     },
     LeafSpec {
         leaf: "v3a",
         family: "qingke_v3",
         caps: &[
-            "dm_data_380",
+            "dm_dataaddr_380",
             "pfic_v3",
             "cs_mstatus",
             "csr_corecfgr",
@@ -37,7 +37,7 @@ const LEAVES: &[LeafSpec] = &[
         leaf: "v3b",
         family: "qingke_v3",
         caps: &[
-            "dm_data_380",
+            "dm_dataaddr_380",
             "pfic_v3",
             "csr_gintenr",
             "csr_corecfgr",
@@ -49,7 +49,7 @@ const LEAVES: &[LeafSpec] = &[
         leaf: "v3f",
         family: "qingke_v3",
         caps: &[
-            "dm_data_340",
+            "dm_dataaddr_340",
             "pfic_v3",
             "csr_inestcr",
             "csr_gintenr",
@@ -62,7 +62,7 @@ const LEAVES: &[LeafSpec] = &[
         leaf: "v4a",
         family: "qingke_v4",
         caps: &[
-            "dm_data_380",
+            "dm_dataaddr_380",
             "csr_gintenr",
             "csr_corecfgr",
             "csr_intsyscr",
@@ -73,7 +73,7 @@ const LEAVES: &[LeafSpec] = &[
         leaf: "v4b",
         family: "qingke_v4",
         caps: &[
-            "dm_data_380",
+            "dm_dataaddr_380",
             "csr_gintenr",
             "csr_corecfgr",
             "csr_intsyscr",
@@ -84,7 +84,7 @@ const LEAVES: &[LeafSpec] = &[
         leaf: "v4c",
         family: "qingke_v4",
         caps: &[
-            "dm_data_380",
+            "dm_dataaddr_380",
             "csr_gintenr",
             "csr_corecfgr",
             "csr_intsyscr",
@@ -95,7 +95,7 @@ const LEAVES: &[LeafSpec] = &[
         leaf: "v4f",
         family: "qingke_v4",
         caps: &[
-            "dm_data_380",
+            "dm_dataaddr_380",
             "csr_gintenr",
             "csr_corecfgr",
             "csr_intsyscr",
@@ -106,7 +106,7 @@ const LEAVES: &[LeafSpec] = &[
         leaf: "v4j",
         family: "qingke_v4",
         caps: &[
-            "dm_data_380",
+            "dm_dataaddr_380",
             "csr_gintenr",
             "csr_corecfgr",
             "csr_intsyscr",
@@ -117,7 +117,7 @@ const LEAVES: &[LeafSpec] = &[
         leaf: "v5f",
         family: "qingke_v5",
         caps: &[
-            "dm_data_340",
+            "dm_dataaddr_340",
             "csr_inestcr",
             "csr_gintenr",
             "csr_cache_strtg_ctlr",
@@ -133,9 +133,9 @@ const LEAVES: &[LeafSpec] = &[
 const FAMILIES: &[&str] = &["qingke_v2", "qingke_v3", "qingke_v4", "qingke_v5"];
 
 const ALL_CAPS: &[&str] = &[
-    "dm_data_f4",
-    "dm_data_380",
-    "dm_data_340",
+    "dm_dataaddr_0f4",
+    "dm_dataaddr_380",
+    "dm_dataaddr_340",
     "pfic_v3",
     "cs_mstatus",
     "csr_corecfgr",

@@ -5,7 +5,7 @@
 #[macro_use]
 mod macros;
 
-#[cfg(any(dm_data_f4, dm_data_380, dm_data_340))]
+#[cfg(any(dm_dataaddr_0f4, dm_dataaddr_380, dm_dataaddr_340))]
 pub mod dm;
 pub mod interrupt;
 pub mod pfic;
