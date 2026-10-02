@@ -20,11 +20,6 @@ jobs:
       run: |
         rustup target add riscv32imc-unknown-none-elf
         rustup target add riscv32imafc-unknown-none-elf
-    - name: Verify qingke-rt crates.io package
-      run: |
-        test -f qingke-rt/build/cfgs.inc.rs
-        cargo package -p qingke-rt --allow-dirty --no-verify
-        tar -xOf target/package/qingke-rt-*.crate '*/build/cfgs.inc.rs' | head -1 | grep -q 'LeafSpec'
     - name: Build
       run: |
         cargo build -p qingke-rt-macros

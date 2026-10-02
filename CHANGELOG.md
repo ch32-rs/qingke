@@ -13,11 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`qingke-rt` crates.io packaging:** ship `build/cfgs.inc.rs` in the published crate (0.8.0 referenced `../build/cfgs.inc.rs`, which only exists in the workspace). **0.8.0 is yanked**; use 0.8.1 or `version = "0.8"`.
 
-### Changed
-
-- CI runs `cargo package -p qingke-rt` to catch missing build includes.
-- `qingke-rt/build/cfgs.inc.rs` is a symlink to the workspace `build/cfgs.inc.rs` (single source of truth).
-
 ## [0.8.0] - 2026-05-21
 
 ### Added
