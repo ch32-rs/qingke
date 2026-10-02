@@ -1,6 +1,4 @@
 // Shared by `qingke/build.rs` and `qingke-rt/build.rs`.
-// In the workspace, `qingke-rt/build/cfgs.inc.rs` is a symlink to this file so the
-// `qingke-rt` crates.io tarball includes it (see CI `package qingke-rt` check).
 // Leaf core features (`v2a`, `v3f`, …) live in each crate's `Cargo.toml`.
 // CSR availability uses the `csr_*` prefix (e.g. `csr_inestcr`, `csr_corecfgr`).
 
