@@ -68,7 +68,7 @@ fn main() {
     }
 
     mod cfgs {
-        include!("../build/cfgs.inc.rs");
+        include!("build/cfgs.inc.rs");
     }
     cfgs::emit_selected_leaf_cfgs();
 
@@ -88,7 +88,7 @@ fn main() {
     println!("cargo:rerun-if-changed=assert-v2-align-highcode.x");
     println!("cargo:rerun-if-changed=assert-v2-align-no-highcode.x");
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=../build/cfgs.inc.rs");
+    println!("cargo:rerun-if-changed=build/cfgs.inc.rs");
 
     let target = env::var("TARGET").unwrap();
     let cargo_flags = env::var("CARGO_ENCODED_RUSTFLAGS").unwrap();
