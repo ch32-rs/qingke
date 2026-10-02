@@ -1,0 +1,59 @@
+---
+description: How to design and change qingke-rt / PAC runtime crates (ch32-rs embedded stack)
+globs: qingke-rt/**/*,build.rs,build/**,Cargo.toml,publish.sh
+alwaysApply: false
+---
+
+# Embedded runtime (`*-rt`) — ch32-rs / QingKe
+
+Distilled from [actionbook/rust-skills](https://github.com/actionbook/rust-skills) **domain-embedded** (layer stack, no_std, ownership) and from **cortex-m-rt**-style published RT crates. Apply **domain → design → mechanics** before patching build scripts.
+
+## Layer stack (do not collapse)
+
+| Layer | ch32-rs | Responsibility |
+|-------|---------|----------------|
+| PAC / core | `qingke`, `ch32-metapac` | Registers, core CSRs, `rustc-cfg` for leaf cores (`qingke_v*`, `csr_*`, `dm_*`) |
+| RT | `qingke-rt` | Startup, vector table, linker glue, `#[entry]` / `#[interrupt]`, `link.x`, RT-only asserts |
+| HAL | `ch32-hal` | Peripherals, chip features wire **one leaf** into both `qingke` and `qingke-rt` |
+| App | firmware / examples | `panic-halt`, Embassy, etc. |
+
+RT is **not** a second PAC. Do not duplicate PAC build logic in RT “so cfgs match”.
+
+## What `qingke-rt` may do
+
+- Emit linker scripts / asserts into `OUT_DIR` (`include_bytes!` on files **inside** `qingke-rt/`).
+- Read `TARGET` / `CARGO_ENCODED_RUSTFLAGS` for ISA extension cfgs (`riscv*`) on the **RT crate only**.
+- Enforce **one leaf feature** by reading leaf names from **`qingke-rt/Cargo.toml`** `[features]` (entries that forward to `qingke/`), not a hard-coded list or PAC cfg tables.
+- Use **`#[cfg(feature = "v2a")]`** (and `any(feature = …)`) in RT **source** for reset/startup paths — mirror leaf features in `qingke-rt/Cargo.toml` and forward to `qingke/…`.
+
+## What `qingke-rt` must not do
+
+- **`include!("../…")` or workspace-only paths** in `build.rs` — breaks `crates.io` tarballs.
+- **Copy, symlink, or `include!`** PAC cfg tables under `qingke-rt/` — leaf → `rustc-cfg` lives **only** in `qingke/build/cfgs.rs` (`mod cfgs` from `qingke/build.rs`).
+- **Add a new published crate** (e.g. `qingke-build`) to share build logic unless the team explicitly chooses that maintenance cost.
+- **Emit PAC `rustc-cfg` from RT** (`qingke_v3`, `csr_*`, …) — those apply only when building `qingke`; RT code must use **Cargo features**, not duplicate cfg emission.
+- **Ad-hoc CI** (`cargo package` tar checks, etc.) without agreement — normal `cargo build` matrix is enough.
+
+## `qingke` (PAC) build
+
+- Single source: **`build/cfgs.rs`** as a build-script module from **`qingke/build.rs`** (no `cfgs.inc.rs`, no `include!` across packages).
+- Exactly **one** leaf feature enabled per build (panic otherwise).
+- Before release: `cargo package -p qingke-rt --no-verify` and confirm the tarball builds (maintainer check, not necessarily CI).
+
+## Macros and publishing
+
+- Proc-macros in **`qingke-rt-macros`**, version-aligned with `qingke-rt` workspace.
+- `publish.sh` order: `qingke` → `qingke-rt-macros` → `qingke-rt` (or documented project order); do not add extra guards unless they solve a real, recurring failure.
+
+## HAL / consumer (`ch32-hal`)
+
+- Chip features: `qingke-rt/v4f` + `qingke/v4f` (same leaf, both crates).
+- Optional atomics: explicit `unsafe-trust-wch-atomics` on **both** where needed; do not hide inside leaf features.
+
+## Anti-patterns (fix the design, not the symptom)
+
+| Symptom | Wrong fix | Right fix |
+|---------|-----------|-----------|
+| RT build fails on CI from registry | `[patch]` in HAL, copy inc file | RT self-contained; PAC cfgs only in `qingke` |
+| RT needs `qingke_v2` in source | `emit_selected_leaf_cfgs` in RT | `#[cfg(feature = "v2a", …)]` + feature forward |
+| Drift between workspace and crates.io | Symlink + comment churn | One file in PAC; RT uses features only |

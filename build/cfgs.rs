@@ -1,6 +1,5 @@
-// Shared by `qingke/build.rs` and `qingke-rt/build.rs`.
-// Leaf core features (`v2a`, `v3f`, …) live in each crate's `Cargo.toml`.
-// CSR availability uses the `csr_*` prefix (e.g. `csr_inestcr`, `csr_corecfgr`).
+// Leaf → `rustc-cfg` mapping for the `qingke` package only (`build.rs` uses `mod cfgs`).
+// Leaf names match `[features]` in `qingke/Cargo.toml`; CSR caps use the `csr_*` prefix.
 
 use std::collections::HashSet;
 use std::env;
@@ -173,7 +172,7 @@ pub fn emit_selected_leaf_cfgs() {
             for cap in spec.caps {
                 println!("cargo:rustc-cfg={}", cap);
             }
-            println!("cargo:rerun-if-changed=build/cfgs.inc.rs");
+            println!("cargo:rerun-if-changed=build/cfgs.rs");
         }
         _ => {
             let names: Vec<_> = selected.iter().map(|s| s.leaf).collect();
@@ -184,9 +183,4 @@ pub fn emit_selected_leaf_cfgs() {
             );
         }
     }
-}
-
-pub fn leaf_enabled(leaf: &str) -> bool {
-    let key = format!("CARGO_FEATURE_{}", leaf.to_ascii_uppercase());
-    env::var_os(&key).is_some()
 }

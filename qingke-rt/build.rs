@@ -56,9 +56,33 @@ fn parse_target(target: &str, cargo_flags: &str) -> (u32, HashSet<char>) {
     (bits, extensions)
 }
 
-const LEAF_FEATURES: &[&str] = &[
-    "v2a", "v2c", "v3a", "v3b", "v3f", "v4a", "v4b", "v4c", "v4f", "v4j", "v5f",
-];
+/// Leaf features are the `[features]` entries that forward to `qingke/…` (see `Cargo.toml`).
+fn leaf_feature_names_from_manifest() -> Vec<String> {
+    let manifest = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("Cargo.toml");
+    let contents = fs::read_to_string(&manifest).unwrap();
+    let mut in_features = false;
+    let mut leaves = Vec::new();
+    for line in contents.lines() {
+        let line = line.split('#').next().unwrap().trim();
+        if line == "[features]" {
+            in_features = true;
+            continue;
+        }
+        if !in_features {
+            continue;
+        }
+        if line.starts_with('[') {
+            break;
+        }
+        if let Some((name, value)) = line.split_once('=') {
+            let name = name.trim();
+            if value.contains("qingke/") {
+                leaves.push(name.to_string());
+            }
+        }
+    }
+    leaves
+}
 
 fn leaf_feature_enabled(leaf: &str) -> bool {
     let key = format!("CARGO_FEATURE_{}", leaf.to_ascii_uppercase());
@@ -66,9 +90,10 @@ fn leaf_feature_enabled(leaf: &str) -> bool {
 }
 
 fn assert_one_leaf_feature() {
-    let selected: Vec<&str> = LEAF_FEATURES
+    let leaves = leaf_feature_names_from_manifest();
+    let selected: Vec<&str> = leaves
         .iter()
-        .copied()
+        .map(String::as_str)
         .filter(|leaf| leaf_feature_enabled(leaf))
         .collect();
     match selected.len() {
@@ -112,6 +137,7 @@ fn main() {
     println!("cargo:rerun-if-changed=assert-v2-align-highcode.x");
     println!("cargo:rerun-if-changed=assert-v2-align-no-highcode.x");
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=Cargo.toml");
 
     let target = env::var("TARGET").unwrap();
     let cargo_flags = env::var("CARGO_ENCODED_RUSTFLAGS").unwrap();

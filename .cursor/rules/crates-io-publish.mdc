@@ -1,0 +1,11 @@
+---
+description: Never publish qingke crates to crates.io without explicit user confirmation
+globs: publish.sh,Cargo.toml
+alwaysApply: true
+---
+
+# crates.io publishing
+
+- **Never** run `cargo publish`, `publish.sh`, or `cargo yank` unless the user explicitly asks in the current conversation.
+- Preparing changes (version bumps, `cargo package`, local build checks) is fine; uploading to the registry is not.
+- When a release is requested, confirm version and publish order (`qingke` → `qingke-rt-macros` → `qingke-rt`) before running publish.

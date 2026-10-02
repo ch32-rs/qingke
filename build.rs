@@ -1,6 +1,6 @@
+#[path = "build/cfgs.rs"]
+mod cfgs;
+
 fn main() {
-    mod cfgs {
-        include!("build/cfgs.inc.rs");
-    }
     cfgs::emit_selected_leaf_cfgs();
 }
