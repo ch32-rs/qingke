@@ -7,8 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-10-02
+
+### Fixed
+
+- **`qingke-rt` crates.io packaging:** ship `build/cfgs.inc.rs` in the published crate (0.8.0 referenced `../build/cfgs.inc.rs`, which only exists in the workspace). **0.8.0 is yanked**; use 0.8.1 or `version = "0.8"`.
+
+### Changed
+
+- CI runs `cargo package -p qingke-rt` to catch missing build includes.
+- `qingke-rt/build/cfgs.inc.rs` is a symlink to the workspace `build/cfgs.inc.rs` (single source of truth).
+
+## [0.8.0] - 2026-05-21
+
 ### Added
 
+- QingKe 0.8: H4 dual-core, leaf core features (`v2a`, `v3f`, …), PFIC/VTF fixes ([#23](https://github.com/ch32-rs/qingke/pull/23)).
 - `#[interrupt(lowcode)]` opts a single handler out of `.highcode` (RAM) placement when the `highcode` feature is enabled, keeping its body in flash. Composes with `core`. No-op when the `highcode` feature is off.
 
 ## [0.7.0] - 2026-05-04
@@ -29,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix linking macro in `qingke-rt-macros`.
 
-[Unreleased]: https://github.com/ch32-rs/qingke/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/ch32-rs/qingke/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/ch32-rs/qingke/compare/v0.8.0...v0.8.1
+[0.8.0]: https://github.com/ch32-rs/qingke/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/ch32-rs/qingke/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/ch32-rs/qingke/releases/tag/v0.6.1
