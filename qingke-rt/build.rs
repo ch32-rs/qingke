@@ -56,6 +56,33 @@ fn parse_target(target: &str, cargo_flags: &str) -> (u32, HashSet<char>) {
     (bits, extensions)
 }
 
+const LEAF_FEATURES: &[&str] = &[
+    "v2a", "v2c", "v3a", "v3b", "v3f", "v4a", "v4b", "v4c", "v4f", "v4j", "v5f",
+];
+
+fn leaf_feature_enabled(leaf: &str) -> bool {
+    let key = format!("CARGO_FEATURE_{}", leaf.to_ascii_uppercase());
+    env::var_os(&key).is_some()
+}
+
+fn assert_one_leaf_feature() {
+    let selected: Vec<&str> = LEAF_FEATURES
+        .iter()
+        .copied()
+        .filter(|leaf| leaf_feature_enabled(leaf))
+        .collect();
+    match selected.len() {
+        0 => panic!(
+            "qingke-rt: enable exactly one leaf core feature (v2a, v3f, v5f, …); see Cargo.toml [features]"
+        ),
+        1 => {}
+        _ => panic!(
+            "qingke-rt: at most one leaf core feature may be enabled, got: {}",
+            selected.join(", ")
+        ),
+    }
+}
+
 fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
@@ -67,13 +94,10 @@ fn main() {
         fs::write(out_dir.join("link.x"), include_bytes!("link-no-highcode.x")).unwrap();
     }
 
-    mod cfgs {
-        include!("build/cfgs.inc.rs");
-    }
-    cfgs::emit_selected_leaf_cfgs();
+    assert_one_leaf_feature();
 
     // QingKe V2 requires the vector table to be 1KB-aligned
-    let has_v2 = cfgs::leaf_enabled("v2a") || cfgs::leaf_enabled("v2c");
+    let has_v2 = leaf_feature_enabled("v2a") || leaf_feature_enabled("v2c");
     let asserts: &[u8] = match (has_v2, has_highcode_feature) {
         (true, true) => include_bytes!("assert-v2-align-highcode.x"),
         (true, false) => include_bytes!("assert-v2-align-no-highcode.x"),
@@ -88,7 +112,6 @@ fn main() {
     println!("cargo:rerun-if-changed=assert-v2-align-highcode.x");
     println!("cargo:rerun-if-changed=assert-v2-align-no-highcode.x");
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=build/cfgs.inc.rs");
 
     let target = env::var("TARGET").unwrap();
     let cargo_flags = env::var("CARGO_ENCODED_RUSTFLAGS").unwrap();

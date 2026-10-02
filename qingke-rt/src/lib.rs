@@ -133,7 +133,7 @@ unsafe extern "C" fn qingke_setup_interrupts() {
 
     // Qingke V2A, V2C
     // (does not have user mode)
-    #[cfg(qingke_v2)]
+    #[cfg(any(feature = "v2a", feature = "v2c"))]
     unsafe {
         core::arch::asm!(
             "
@@ -148,7 +148,7 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     // Qingke V3A, V3B, V3C, V3V (non-V3F V3 variants).
     // Leaves corecfgr / intsyscr / nest-level at reset defaults; only
     // OR's a couple of bits into mstatus.
-    #[cfg(all(qingke_v3, not(feature = "v3f")))]
+    #[cfg(any(feature = "v3a", feature = "v3b"))]
     unsafe {
         #[cfg(feature = "u-mode")]
         core::arch::asm!(
@@ -226,8 +226,19 @@ unsafe extern "C" fn qingke_setup_interrupts() {
 
     // corecfgr (0xBC0): pipeline control and branch prediction
     #[cfg(any(
-        qingke_v4,
-        not(any(qingke_v2, qingke_v3, qingke_v4, qingke_v5)) // Fallback when no leaf is selected
+        feature = "v4a",
+        feature = "v4b",
+        feature = "v4c",
+        feature = "v4f",
+        feature = "v4j",
+        not(any(
+            feature = "v2a",
+            feature = "v2c",
+            feature = "v3a",
+            feature = "v3b",
+            feature = "v3f",
+            feature = "v5f",
+        ))
     ))]
     unsafe {
         #[cfg(feature = "u-mode")]
