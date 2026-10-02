@@ -1,9 +1,12 @@
 //! Low level access to WCH's QingKe RISC-V processors
 #![no_std]
+#![allow(unexpected_cfgs)]
 
 #[macro_use]
 mod macros;
 
+#[cfg(any(dm_dataaddr_0f4, dm_dataaddr_380, dm_dataaddr_340))]
+pub mod dm;
 pub mod interrupt;
 pub mod pfic;
 pub mod register;
