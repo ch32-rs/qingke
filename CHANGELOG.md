@@ -22,7 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **`qingke-rt` crates.io packaging:** ship leaf cfg build input inside the published crate (0.8.0 used a workspace-only path). **0.8.0 is yanked** on crates.io; use 0.8.1+ or `version = "0.8"`.
+- **`qingke-rt` crates.io packaging:** ship leaf cfg build input inside the published crate (`build.rs` had referenced `../build/cfgs.inc.rs`, which exists only in the workspace).
+
+### Removed
+
+- **Yanked on crates.io:** `qingke`, `qingke-rt`, and `qingke-rt-macros` **0.8.0** (broken `qingke-rt` tarball). Depend on **0.8.1** or `version = "0.8"`.
 
 ## [0.8.0] - 2026-05-21
 
