@@ -27,5 +27,5 @@ jobs:
         cargo build -p qingke-rt --no-default-features --features v2a --target riscv32imc-unknown-none-elf
         cargo build -p qingke --no-default-features --features v3f,dual-core,unsafe-trust-wch-atomics,critical-section-impl --target riscv32imafc-unknown-none-elf
         cargo build -p qingke --no-default-features --features v5f,dual-core,unsafe-trust-wch-atomics,critical-section-impl --target riscv32imafc-unknown-none-elf
-        cargo build -p qingke-rt --no-default-features --features v3f --target riscv32imafc-unknown-none-elf
-        cargo build -p qingke-rt --no-default-features --features v5f --target riscv32imafc-unknown-none-elf
+        cargo build -p qingke-rt --no-default-features --features v3f,unsafe-trust-wch-atomics --target riscv32imafc-unknown-none-elf
+        cargo build -p qingke-rt --no-default-features --features v5f,unsafe-trust-wch-atomics --target riscv32imafc-unknown-none-elf
