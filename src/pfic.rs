@@ -154,7 +154,14 @@ pub unsafe fn disable_vtf(channel: u8) {
 
 #[cfg(not(pfic_v3))]
 pub unsafe fn enable_vtf(channel: u8, irq: u8, address: u32) {
-    assert!(channel < 4, "VTF channel must be less than 4");
+    cfg_if::cfg_if! {
+        if #[cfg(qingke_v2)] {
+            // QingKe V2 manual §3.5 / Table 1-1: 2 VTF channels (VTFADDRR0–1).
+            assert!(channel < 2, "QingKe V2 has 2 VTF channels");
+        } else {
+            assert!(channel < 4, "VTF channel must be less than 4");
+        }
+    }
 
     // [31:24]: Numbering of VTF interrupt 3
     // [23:16]: Numbering of VTF interrupt 2
@@ -164,7 +171,7 @@ pub unsafe fn enable_vtf(channel: u8, irq: u8, address: u32) {
 
     unsafe {
         let irq_bits = (irq as u32) << ((channel as u32) * 8);
-        let irq_mask = 0xFF << ((channel as u32) * 8);
+        let irq_mask = 0xFFu32 << ((channel as u32) * 8);
         let prior = ptr::read_volatile(PFIC_VTFIDR);
         ptr::write_volatile(PFIC_VTFIDR, prior & !irq_mask | irq_bits);
 
@@ -177,7 +184,13 @@ pub unsafe fn enable_vtf(channel: u8, irq: u8, address: u32) {
 
 #[cfg(not(pfic_v3))]
 pub unsafe fn disable_vtf(channel: u8) {
-    assert!(channel < 4, "VTF channel must be less than 4");
+    cfg_if::cfg_if! {
+        if #[cfg(qingke_v2)] {
+            assert!(channel < 2, "QingKe V2 has 2 VTF channels");
+        } else {
+            assert!(channel < 4, "VTF channel must be less than 4");
+        }
+    }
     unsafe {
         let val = ptr::read_volatile(PFIC_VTFADDRR0.offset(channel as isize));
         ptr::write_volatile(PFIC_VTFADDRR0.offset(channel as isize), val & 0xFFFF_FFFE);

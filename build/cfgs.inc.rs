@@ -39,7 +39,6 @@ const LEAVES: &[LeafSpec] = &[
         family: "qingke_v3",
         caps: &[
             "dm_dataaddr_380",
-            "pfic_v3",
             "csr_gintenr",
             "csr_corecfgr",
             "csr_intsyscr",
@@ -51,7 +50,6 @@ const LEAVES: &[LeafSpec] = &[
         family: "qingke_v3",
         caps: &[
             "dm_dataaddr_340",
-            "pfic_v3",
             "csr_inestcr",
             "csr_gintenr",
             "csr_corecfgr",
