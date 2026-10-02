@@ -104,11 +104,12 @@ SECTIONS
         *(.uninit .uninit.*);
     } >RAM
 
-    .stack ORIGIN(RAM)+LENGTH(RAM) (NOLOAD) :
-    {
-        . = ALIGN(4);
-        PROVIDE(_stack_top = . );
-    } >RAM
+    /* Align `__sheap` and `_stack_end` pointers to 4 bytes */
+    . = ALIGN(4);
+
+    /* Place the heap start and stack end at the end of allocated RAM */
+    PROVIDE(__sheap = .);
+    PROVIDE(_stack_end = .);
 
     .got (INFO) :
     {
