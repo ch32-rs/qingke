@@ -36,3 +36,4 @@ qingke = { version = "0.8.0", path = "../", features = ["critical-section-impl"]
 
 [package.metadata.docs.rs]
 targets = ["riscv32imc-unknown-none-elf"]
+features = ["v4f"]

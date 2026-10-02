@@ -55,5 +55,7 @@ v4f = []
 v4j = []
 v5f = []
 
+# docs.rs: must enable exactly one leaf (build.rs); imc avoids imafc atomics guard.
 [package.metadata.docs.rs]
 targets = ["riscv32imc-unknown-none-elf"]
+features = ["v4f", "critical-section-impl"]
