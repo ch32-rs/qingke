@@ -1,4 +1,6 @@
 // Shared by `qingke/build.rs` and `qingke-rt/build.rs`.
+// In the workspace, `qingke-rt/build/cfgs.inc.rs` is a symlink to this file so the
+// `qingke-rt` crates.io tarball includes it (see CI `package qingke-rt` check).
 // Leaf core features (`v2a`, `v3f`, …) live in each crate's `Cargo.toml`.
 // CSR availability uses the `csr_*` prefix (e.g. `csr_inestcr`, `csr_corecfgr`).
 
@@ -161,8 +163,9 @@ pub fn emit_selected_leaf_cfgs() {
 
     match selected.len() {
         0 => {
+            let pkg = env::var("CARGO_PKG_NAME").unwrap_or_else(|_| "qingke".into());
             panic!(
-                "qingke: enable exactly one leaf core feature on this package \
+                "{pkg}: enable exactly one leaf core feature on this package \
                  (v2a, v3f, v5f, …); see Cargo.toml [features]"
             );
         }
@@ -176,8 +179,9 @@ pub fn emit_selected_leaf_cfgs() {
         }
         _ => {
             let names: Vec<_> = selected.iter().map(|s| s.leaf).collect();
+            let pkg = env::var("CARGO_PKG_NAME").unwrap_or_else(|_| "qingke".into());
             panic!(
-                "qingke: at most one leaf core feature may be enabled, got: {}",
+                "{pkg}: at most one leaf core feature may be enabled, got: {}",
                 names.join(", ")
             );
         }
