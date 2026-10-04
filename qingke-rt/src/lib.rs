@@ -138,7 +138,7 @@ unsafe extern "C" fn qingke_setup_interrupts() {
 
     // Qingke V2A, V2C
     // (does not have user mode)
-    #[cfg(any(feature = "v2a", feature = "v2c"))]
+    #[cfg(qingke_v2)]
     unsafe {
         core::arch::asm!(
             "
@@ -150,11 +150,13 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         );
     }
 
-    // Qingke V3A, V3B, V3C, V3V (non-V3F V3 variants).
+    // Qingke V3A, V3B, V3C, V3V — the V3 family minus V3F, which alone among
+    // the V3 leaves has `inestcr` (0xBC1) and its own startup sequence
+    // (`startup_ch32h417_v3f.S`), so it cannot share this block.
     // Leaves corecfgr / intsyscr / nest-level at reset defaults; only OR's /
     // clear's a couple of bits into mstatus. MPP is written explicitly rather
     // than relying on its reset value.
-    #[cfg(any(feature = "v3a", feature = "v3b"))]
+    #[cfg(all(qingke_v3, not(feature = "v3f")))]
     unsafe {
         #[cfg(feature = "u-mode")]
         core::arch::asm!(
@@ -266,19 +268,10 @@ unsafe extern "C" fn qingke_setup_interrupts() {
 
     // corecfgr (0xBC0): pipeline control and branch prediction
     #[cfg(any(
-        feature = "v4a",
-        feature = "v4b",
-        feature = "v4c",
-        feature = "v4f",
-        feature = "v4j",
-        not(any(
-            feature = "v2a",
-            feature = "v2c",
-            feature = "v3a",
-            feature = "v3b",
-            feature = "v3f",
-            feature = "v5f",
-        ))
+        qingke_v4,
+        // Fallback when no leaf is selected: the build script still picks a
+        // core family, so this only matters for generic builds.
+        not(any(qingke_v2, qingke_v3, qingke_v4, qingke_v5))
     ))]
     unsafe {
         // As for v3a/v3b: MPP is written explicitly instead of relying on its
