@@ -120,16 +120,21 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     // 0x3 both nested interrupts and hardware stack
     // 0x1 only hardware stack
 
-    // for user mode: mstatus = 0x80
-    // mpp(m-mode previous privilege) = 0b00 = U
-    // mpie(m-mode previous interrupt enable) = 0b1
-    // mie(m-mode interrupt enable) = 0b0
-    // interrupts will be enabled when mret at the end of handle_reset
-    // jumps to main (mret does mie = mpie)
-    // for machine mode: mstatus = 0x1880
-    // mpp = 0b11
-    // mpie = 0b1
-    // mie = 0b0
+    // WCH's `handle_reset` reaches `main` through `mret`, so `mstatus.MPP`
+    // picks the privilege the application runs in (the `mret` also copies
+    // MPIE back into MIE). The default is Machine mode, matching `riscv-rt`,
+    // which never leaves M-mode: it jumps straight to `_start_rust` rather
+    // than `mret`-ing. The `u-mode` feature reproduces WCH's startup instead,
+    // returning to User mode, where Machine-mode CSRs raise an illegal
+    // instruction (only the `URW` CSRs such as gintenr/intsyscr stay
+    // reachable — measured on CH32H417).
+    //
+    //   `u-mode`:          MPP = 0b00 (U)  — mirrors startup_ch32h417_*.S
+    //   default (machine): MPP = 0b11 (M)  — mirrors riscv-rt
+    //
+    // The V3F/V5F blocks below also need FS = Dirty (bits 14:13) plus
+    // MIE/MPIE, so they use a full `csrw`; their two variants differ only in
+    // the MPP field: 0x6088 (U) vs 0x7888 (M).
 
     // Qingke V2A, V2C
     // (does not have user mode)
@@ -146,13 +151,16 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     }
 
     // Qingke V3A, V3B, V3C, V3V (non-V3F V3 variants).
-    // Leaves corecfgr / intsyscr / nest-level at reset defaults; only
-    // OR's a couple of bits into mstatus.
+    // Leaves corecfgr / intsyscr / nest-level at reset defaults; only OR's /
+    // clear's a couple of bits into mstatus. MPP is written explicitly rather
+    // than relying on its reset value.
     #[cfg(any(feature = "v3a", feature = "v3b"))]
     unsafe {
         #[cfg(feature = "u-mode")]
         core::arch::asm!(
             "
+            li t0, 0x1800
+            csrc mstatus, t0
             li t0, 0x80
             csrs mstatus, t0
             "
@@ -160,7 +168,9 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         #[cfg(not(feature = "u-mode"))]
         core::arch::asm!(
             "
-            li t0, 0x1880
+            li t0, 0x1800
+            csrs mstatus, t0
+            li t0, 0x80
             csrs mstatus, t0
             "
         );
@@ -171,8 +181,9 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     // control CSRs: pipeline/branch-prediction config (corecfgr 0xBC0),
     // 2-level nest control (inestcr 0xBC1), interrupt nesting +
     // hardware-stack enable (intsyscr 0x804), and a full `csrw` of
-    // mstatus selecting U-mode return + FP-Dirty. Values mirror
-    // `startup_ch32h417_v3f.S:541-551`.
+    // mstatus selecting the return privilege + FP-Dirty. Values mirror
+    // `startup_ch32h417_v3f.S:541-551` when `u-mode` is enabled; otherwise
+    // MPP is set to Machine mode (see the note at the top of this function).
     //
     // Note: the post-block FP-enable code below (`#[cfg(any(riscvf,
     // riscvd))]`) will subsequently downgrade FS from Dirty (0b11) to
@@ -188,7 +199,21 @@ unsafe extern "C" fn qingke_setup_interrupts() {
             csrw 0xBC0, t0
             li t0, 0x07
             csrw 0x804, t0
+            "
+        );
+        // 0x6088 = FS Dirty + MPIE + MIE + MPP = U
+        // 0x7888 = the same with MPP = M
+        #[cfg(feature = "u-mode")]
+        core::arch::asm!(
+            "
             li t0, 0x6088
+            csrw mstatus, t0
+            "
+        );
+        #[cfg(not(feature = "u-mode"))]
+        core::arch::asm!(
+            "
+            li t0, 0x7888
             csrw mstatus, t0
             "
         );
@@ -207,7 +232,8 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     // will land as a separate opt-in feature.
     //
     // Same FS-downgrade note as v3f applies: the riscvf/d post-block
-    // will reset FS from Dirty to Initial.
+    // will reset FS from Dirty to Initial. As for v3f, the mstatus write is
+    // gated on `u-mode`; the default keeps MPP = Machine mode.
     #[cfg(feature = "v5f")]
     unsafe {
         use qingke::register::inestcr::{self, NestLevel};
@@ -218,7 +244,21 @@ unsafe extern "C" fn qingke_setup_interrupts() {
             csrw 0xBC0, t0
             li t0, 0x0F
             csrw 0x804, t0
+            "
+        );
+        // 0x6088 = FS Dirty + MPIE + MIE + MPP = U
+        // 0x7888 = the same with MPP = M
+        #[cfg(feature = "u-mode")]
+        core::arch::asm!(
+            "
             li t0, 0x6088
+            csrw mstatus, t0
+            "
+        );
+        #[cfg(not(feature = "u-mode"))]
+        core::arch::asm!(
+            "
+            li t0, 0x7888
             csrw mstatus, t0
             "
         );
@@ -241,6 +281,8 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         ))
     ))]
     unsafe {
+        // As for v3a/v3b: MPP is written explicitly instead of relying on its
+        // reset value.
         #[cfg(feature = "u-mode")]
         core::arch::asm!(
             "
@@ -248,6 +290,8 @@ unsafe extern "C" fn qingke_setup_interrupts() {
             csrw 0xbc0, t0
             li t0, 0x3
             csrw 0x804, t0
+            li t0, 0x1800
+            csrc mstatus, t0
             li t0, 0x80
             csrs mstatus, t0
             "
@@ -259,7 +303,9 @@ unsafe extern "C" fn qingke_setup_interrupts() {
             csrw 0xbc0, t0
             li t0, 0x3
             csrw 0x804, t0
-            li t0, 0x1880
+            li t0, 0x1800
+            csrs mstatus, t0
+            li t0, 0x80
             csrs mstatus, t0
             "
         );
