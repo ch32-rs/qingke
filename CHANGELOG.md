@@ -7,16 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.8.2] - 2026-10-02
+## [0.8.2] - 2026-10-05
 
 ### Fixed
 
 - **`qingke-rt`:** do not vendor or `include!` PAC `cfgs` logic; startup uses **Cargo features** aligned with `qingke-rt/Cargo.toml`.
 - **`qingke` build:** replace `cfgs.inc.rs` + `include!` with `build/cfgs.rs` (`#[path]` module) for crates.io-safe packaging.
+- **`qingke-rt` startup:** the `u-mode` feature now applies to `v3f` and `v5f` as well. Both wrote `mstatus = 0x6088` (`MPP = 0b00`, User mode) unconditionally, so `u-mode` had no effect on CH32H417 and Machine mode was unreachable. The default is now Machine mode (`0x7888`), matching `riscv-rt`, and `u-mode` keeps mirroring WCH's `startup_ch32h417_*.S`.
+- **`qingke-rt` startup:** write `mstatus.MPP` explicitly on the V3A/V3B and V4 paths instead of relying on its reset value.
 
 ### Changed
 
 - **`qingke-rt` build:** enforce exactly one leaf feature using names from this crate’s `[features]` (forwarders to `qingke/`), not a duplicated constant list.
+- **`qingke-rt` build:** derive the core-family cfg (`qingke_v2` … `qingke_v5`) from the leaf feature name, so `lib.rs` branches per family instead of enumerating leaf features. Leaf detection is restricted to `v<family><variant>` names — `unsafe-trust-wch-atomics`, which also forwards to `qingke/`, was previously collected as a leaf.
 
 ## [0.8.1] - 2026-10-02
 
