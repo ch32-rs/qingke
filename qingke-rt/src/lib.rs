@@ -178,6 +178,28 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         );
     }
 
+    // Qingke V3B: the interrupt wrapper relies on the hardware stack, which is off after
+    // reset (INTSYSCR = 0x4). Same setup as the openwch CH32V205 EVT, see the CH32V205 RM
+    // section 9.5.4:
+    // - corecfgr(0xbc0) = 0x21: prefetch mode 1 (reset default) and IE_REMAP_EN, which maps
+    //   bits 3 and 7 of gintenr (0x800) to mstatus MIE and MPIE. Without it gintenr is read
+    //   only, and the critical section could not disable interrupts.
+    // - intsyscr(0x804) = 0x7: hardware stack, nesting, 1 bit preemption (reset default)
+    // - inestcr(0xbc1) = 0x1: one nesting level
+    #[cfg(feature = "v3b")]
+    unsafe {
+        core::arch::asm!(
+            "
+            li t0, 0x21
+            csrw 0xbc0, t0
+            li t0, 0x7
+            csrw 0x804, t0
+            li t0, 0x1
+            csrw 0xbc1, t0
+            "
+        );
+    }
+
     // Qingke V3F (CH32H417 primary core).
     // Unlike V3A/V3B, V3F's WCH startup writes the full set of QingKe
     // control CSRs: pipeline/branch-prediction config (corecfgr 0xBC0),
