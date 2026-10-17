@@ -150,12 +150,13 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         );
     }
 
-    // Qingke V3A, V3B, V3C, V3V — the V3 family minus V3F, which alone among
-    // the V3 leaves has `inestcr` (0xBC1) and its own startup sequence
-    // (`startup_ch32h417_v3f.S`), so it cannot share this block.
-    // Leaves corecfgr / intsyscr / nest-level at reset defaults; only OR's /
-    // clear's a couple of bits into mstatus. MPP is written explicitly rather
-    // than relying on its reset value.
+    // Qingke V3A, V3B, V3C, V3V — the V3 family minus V3F, which writes a
+    // full mstatus in its own startup sequence (`startup_ch32h417_v3f.S`),
+    // so it cannot share this block.
+    // Only OR's / clear's a couple of bits into mstatus; MPP is written
+    // explicitly rather than relying on its reset value. corecfgr / intsyscr
+    // / inestcr stay at reset defaults, except on V3C, whose block below
+    // sets all three.
     #[cfg(all(qingke_v3, not(feature = "v3f")))]
     unsafe {
         #[cfg(feature = "u-mode")]
@@ -174,6 +175,32 @@ unsafe extern "C" fn qingke_setup_interrupts() {
             csrs mstatus, t0
             li t0, 0x80
             csrs mstatus, t0
+            "
+        );
+    }
+
+    // Qingke V3C (CH585/CH584, CH570/CH572): the same three CSRs as V3F,
+    // with the values of startup_CH585.S / startup_CH572.S. CH585 datasheet
+    // V1.6, "Microprocessor Configuration Register", "Interrupt System Control
+    // Register" and "Interrupt Nesting Control Register":
+    // - corecfgr(0xbc0) = 0x25: FETCH_MODE = 01 (prefetch enabled, the reset
+    //   default), ROM_JUMP_ACC (jump acceleration for the ROM area) and
+    //   IE_REMAP_EN, which maps bits 3 and 7 of CSR 0x800 to mstatus MIE and
+    //   MPIE. Without it 0x800 is read only, and the critical section could not
+    //   disable interrupts.
+    // - intsyscr(0x804) = 0x3: HWSTKEN, the hardware stack that the interrupt
+    //   trampoline relies on. Bit 1, INESTEN, is read only and reads 1.
+    // - inestcr(0xbc1) = 0x1: NEST_LVL = 01, one level of nesting.
+    #[cfg(feature = "v3c")]
+    unsafe {
+        core::arch::asm!(
+            "
+            li t0, 0x25
+            csrw 0xbc0, t0
+            li t0, 0x3
+            csrw 0x804, t0
+            li t0, 0x1
+            csrw 0xbc1, t0
             "
         );
     }

@@ -44,6 +44,20 @@ const LEAVES: &[LeafSpec] = &[
             "csr_mtvec",
         ],
     },
+    // No `dm_dataaddr_*`: neither the CH570 nor the CH585 EVT has an SDI
+    // printf, so the debug module data address is unknown and `qingke::dm`
+    // is left out rather than guessed.
+    LeafSpec {
+        leaf: "v3c",
+        family: "qingke_v3",
+        caps: &[
+            "csr_inestcr",
+            "csr_gintenr",
+            "csr_corecfgr",
+            "csr_intsyscr",
+            "csr_mtvec",
+        ],
+    },
     LeafSpec {
         leaf: "v3f",
         family: "qingke_v3",
