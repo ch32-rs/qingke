@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `v3c` feature flag for the QingKe V3C core (CH585/CH584,
+  CH570/CH572): startup CSR configuration following the vendor EVT
+  ([#33](https://github.com/ch32-rs/qingke/issues/33)).
+
 ## [0.8.2] - 2026-10-05
 
 ### Fixed
