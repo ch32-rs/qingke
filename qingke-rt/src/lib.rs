@@ -150,14 +150,13 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         );
     }
 
-    // Qingke V3A, V3B, V3C, V3V — the V3 family minus V3F, which writes a
-    // full mstatus in its own startup sequence (`startup_ch32h417_v3f.S`),
-    // so it cannot share this block.
+    // Qingke V3A, V3B, V3C. V3F and V3V write a full mstatus in their
+    // own startup sequences, so they cannot share this block.
     // Only OR's / clear's a couple of bits into mstatus; MPP is written
     // explicitly rather than relying on its reset value. corecfgr / intsyscr
     // / inestcr stay at reset defaults, except on V3C, whose block below
     // sets all three.
-    #[cfg(all(qingke_v3, not(feature = "v3f")))]
+    #[cfg(all(qingke_v3, not(any(feature = "v3f", feature = "v3v"))))]
     unsafe {
         #[cfg(feature = "u-mode")]
         core::arch::asm!(
@@ -203,6 +202,29 @@ unsafe extern "C" fn qingke_setup_interrupts() {
             csrw 0xbc1, t0
             "
         );
+    }
+
+    // Qingke V3V (CH32V407/CH32V467), matching WCH's startup_ch32v4x7.S.
+    // VS = Dirty (bits 10:9), not FS: this core has vectors, not scalar FP.
+    // Keep M-mode by default; `u-mode` uses the SDK's 0x688 mstatus value.
+    #[cfg(feature = "v3v")]
+    unsafe {
+        core::arch::asm!(
+            "
+            li t0, 0x100
+            csrc 0x805, t0
+            li t0, 0x21
+            csrw 0xBC0, t0
+            li t0, 0x01
+            csrw 0xBC1, t0
+            li t0, 0x07
+            csrw 0x804, t0
+            "
+        );
+        #[cfg(feature = "u-mode")]
+        core::arch::asm!("li t0, 0x688", "csrw mstatus, t0");
+        #[cfg(not(feature = "u-mode"))]
+        core::arch::asm!("li t0, 0x1e88", "csrw mstatus, t0");
     }
 
     // Qingke V3F (CH32H417 primary core).
@@ -338,7 +360,10 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         unsafe extern "C" {
             fn _unified_trap_handler();
         }
-        mtvec::write(_unified_trap_handler as *const () as usize, TrapMode::Direct);
+        mtvec::write(
+            _unified_trap_handler as *const () as usize,
+            TrapMode::Direct,
+        );
     }
 
     // Qingke V2's mtvec must be 1KB aligned.

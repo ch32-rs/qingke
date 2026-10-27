@@ -14,12 +14,24 @@ const LEAVES: &[LeafSpec] = &[
     LeafSpec {
         leaf: "v2a",
         family: "qingke_v2",
-        caps: &["dm_dataaddr_0f4", "cs_mstatus", "csr_corecfgr", "csr_intsyscr", "csr_mtvec"],
+        caps: &[
+            "dm_dataaddr_0f4",
+            "cs_mstatus",
+            "csr_corecfgr",
+            "csr_intsyscr",
+            "csr_mtvec",
+        ],
     },
     LeafSpec {
         leaf: "v2c",
         family: "qingke_v2",
-        caps: &["dm_dataaddr_0f4", "cs_mstatus", "csr_corecfgr", "csr_intsyscr", "csr_mtvec"],
+        caps: &[
+            "dm_dataaddr_0f4",
+            "cs_mstatus",
+            "csr_corecfgr",
+            "csr_intsyscr",
+            "csr_mtvec",
+        ],
     },
     LeafSpec {
         leaf: "v3a",
@@ -63,6 +75,19 @@ const LEAVES: &[LeafSpec] = &[
         family: "qingke_v3",
         caps: &[
             "dm_dataaddr_340",
+            "csr_inestcr",
+            "csr_gintenr",
+            "csr_corecfgr",
+            "csr_intsyscr",
+            "csr_mtvec",
+        ],
+    },
+    // CH32V407/CH32V467. The SDI data address is not yet validated, so
+    // deliberately expose no `dm_dataaddr_*` capability.
+    LeafSpec {
+        leaf: "v3v",
+        family: "qingke_v3",
+        caps: &[
             "csr_inestcr",
             "csr_gintenr",
             "csr_corecfgr",
@@ -196,5 +221,28 @@ pub fn emit_selected_leaf_cfgs() {
                 names.join(", ")
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::LEAVES;
+
+    #[test]
+    fn v3v_capabilities_do_not_guess_sdi_or_old_pfic_layout() {
+        let spec = LEAVES.iter().find(|spec| spec.leaf == "v3v").unwrap();
+        assert_eq!(spec.family, "qingke_v3");
+        for cap in [
+            "csr_inestcr",
+            "csr_gintenr",
+            "csr_corecfgr",
+            "csr_intsyscr",
+            "csr_mtvec",
+        ] {
+            assert!(spec.caps.contains(&cap));
+        }
+        assert!(!spec.caps.iter().any(|cap| cap.starts_with("dm_dataaddr_")));
+        assert!(!spec.caps.contains(&"pfic_v3"));
+        assert!(!spec.caps.contains(&"cs_mstatus"));
     }
 }
