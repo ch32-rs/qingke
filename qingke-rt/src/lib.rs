@@ -209,22 +209,38 @@ unsafe extern "C" fn qingke_setup_interrupts() {
     // Keep M-mode by default; `u-mode` uses the SDK's 0x688 mstatus value.
     #[cfg(feature = "v3v")]
     unsafe {
+        use qingke::register::inestcr::{self, NestLevel};
         core::arch::asm!(
             "
             li t0, 0x100
             csrc 0x805, t0
             li t0, 0x21
             csrw 0xBC0, t0
-            li t0, 0x01
-            csrw 0xBC1, t0
+            "
+        );
+        inestcr::write(NestLevel::Two as usize);
+        core::arch::asm!(
+            "
             li t0, 0x07
             csrw 0x804, t0
             "
         );
+        // 0x688 = VS Dirty + MPIE + MIE + MPP = U
+        // 0x1e88 = the same with MPP = M
         #[cfg(feature = "u-mode")]
-        core::arch::asm!("li t0, 0x688", "csrw mstatus, t0");
+        core::arch::asm!(
+            "
+            li t0, 0x688
+            csrw mstatus, t0
+            "
+        );
         #[cfg(not(feature = "u-mode"))]
-        core::arch::asm!("li t0, 0x1e88", "csrw mstatus, t0");
+        core::arch::asm!(
+            "
+            li t0, 0x1e88
+            csrw mstatus, t0
+            "
+        );
     }
 
     // Qingke V3F (CH32H417 primary core).
@@ -360,10 +376,7 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         unsafe extern "C" {
             fn _unified_trap_handler();
         }
-        mtvec::write(
-            _unified_trap_handler as *const () as usize,
-            TrapMode::Direct,
-        );
+        mtvec::write(_unified_trap_handler as *const () as usize, TrapMode::Direct);
     }
 
     // Qingke V2's mtvec must be 1KB aligned.

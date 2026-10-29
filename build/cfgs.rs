@@ -14,24 +14,12 @@ const LEAVES: &[LeafSpec] = &[
     LeafSpec {
         leaf: "v2a",
         family: "qingke_v2",
-        caps: &[
-            "dm_dataaddr_0f4",
-            "cs_mstatus",
-            "csr_corecfgr",
-            "csr_intsyscr",
-            "csr_mtvec",
-        ],
+        caps: &["dm_dataaddr_0f4", "cs_mstatus", "csr_corecfgr", "csr_intsyscr", "csr_mtvec"],
     },
     LeafSpec {
         leaf: "v2c",
         family: "qingke_v2",
-        caps: &[
-            "dm_dataaddr_0f4",
-            "cs_mstatus",
-            "csr_corecfgr",
-            "csr_intsyscr",
-            "csr_mtvec",
-        ],
+        caps: &["dm_dataaddr_0f4", "cs_mstatus", "csr_corecfgr", "csr_intsyscr", "csr_mtvec"],
     },
     LeafSpec {
         leaf: "v3a",
