@@ -70,12 +70,13 @@ const LEAVES: &[LeafSpec] = &[
             "csr_mtvec",
         ],
     },
-    // CH32V407/CH32V467. The SDI data address is not yet validated, so
-    // deliberately expose no `dm_dataaddr_*` capability.
+    // CH32V407/CH32V467: WCH EVT's SRC/Debug/debug.c and SDI_Printf
+    // example use DATA0 = 0xE0000340 and DATA1 = 0xE0000344.
     LeafSpec {
         leaf: "v3v",
         family: "qingke_v3",
         caps: &[
+            "dm_dataaddr_340",
             "csr_inestcr",
             "csr_gintenr",
             "csr_corecfgr",
@@ -217,7 +218,7 @@ mod tests {
     use super::LEAVES;
 
     #[test]
-    fn v3v_capabilities_do_not_guess_sdi_or_old_pfic_layout() {
+    fn v3v_capabilities_match_evt_without_old_pfic_layout() {
         let spec = LEAVES.iter().find(|spec| spec.leaf == "v3v").unwrap();
         assert_eq!(spec.family, "qingke_v3");
         for cap in [
@@ -229,7 +230,13 @@ mod tests {
         ] {
             assert!(spec.caps.contains(&cap));
         }
-        assert!(!spec.caps.iter().any(|cap| cap.starts_with("dm_dataaddr_")));
+        let dm_caps: Vec<_> = spec
+            .caps
+            .iter()
+            .copied()
+            .filter(|cap| cap.starts_with("dm_dataaddr_"))
+            .collect();
+        assert_eq!(dm_caps, ["dm_dataaddr_340"]);
         assert!(!spec.caps.contains(&"pfic_v3"));
         assert!(!spec.caps.contains(&"cs_mstatus"));
     }
