@@ -26,6 +26,9 @@ jobs:
         rustc --edition=2024 --test build/cfgs.rs -o /tmp/qingke-cfg-tests && /tmp/qingke-cfg-tests
         cargo build -p qingke --no-default-features --features v2a,unsafe-trust-wch-atomics,critical-section-impl --target riscv32imc-unknown-none-elf
         cargo build -p qingke-rt --no-default-features --features v2a --target riscv32imc-unknown-none-elf
+        cargo build -p qingke --no-default-features --features v3b,critical-section-impl --target riscv32imc-unknown-none-elf
+        cargo build -p qingke-rt --no-default-features --features v3b --target riscv32imc-unknown-none-elf
+        cargo build -p qingke-rt --no-default-features --features v3b,u-mode,highcode --target riscv32imc-unknown-none-elf
         cargo build -p qingke --no-default-features --features v3v,critical-section-impl --target riscv32imc-unknown-none-elf
         cargo build -p qingke-rt --no-default-features --features v3v --target riscv32imc-unknown-none-elf
         cargo build -p qingke-rt --no-default-features --features v3v,u-mode,highcode --target riscv32imc-unknown-none-elf

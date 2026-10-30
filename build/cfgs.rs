@@ -38,6 +38,7 @@ const LEAVES: &[LeafSpec] = &[
         family: "qingke_v3",
         caps: &[
             "dm_dataaddr_380",
+            "csr_inestcr",
             "csr_gintenr",
             "csr_corecfgr",
             "csr_intsyscr",
@@ -216,6 +217,23 @@ pub fn emit_selected_leaf_cfgs() {
 #[cfg(test)]
 mod tests {
     use super::LEAVES;
+
+    #[test]
+    fn v3b_capabilities_support_evt_interrupt_setup() {
+        let spec = LEAVES.iter().find(|spec| spec.leaf == "v3b").unwrap();
+        assert_eq!(spec.family, "qingke_v3");
+        for cap in [
+            "csr_inestcr",
+            "csr_gintenr",
+            "csr_corecfgr",
+            "csr_intsyscr",
+            "csr_mtvec",
+        ] {
+            assert!(spec.caps.contains(&cap));
+        }
+        assert!(!spec.caps.contains(&"pfic_v3"));
+        assert!(!spec.caps.contains(&"cs_mstatus"));
+    }
 
     #[test]
     fn v3v_capabilities_match_evt_without_old_pfic_layout() {
