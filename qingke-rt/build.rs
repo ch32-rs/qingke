@@ -170,11 +170,11 @@ fn main() {
     }
     println!("cargo::rustc-cfg={family}");
 
-    // QingKe V2 requires the vector table to be 1KB-aligned
-    let has_v2 = family == "qingke_v2";
-    let asserts: &[u8] = match (has_v2, has_highcode_feature) {
-        (true, true) => include_bytes!("assert-v2-align-highcode.x"),
-        (true, false) => include_bytes!("assert-v2-align-no-highcode.x"),
+    // QingKe V2 and V3V require the vector table to be 1KB-aligned.
+    let requires_1k_alignment = family == "qingke_v2" || leaf_feature_enabled("v3v");
+    let asserts: &[u8] = match (requires_1k_alignment, has_highcode_feature) {
+        (true, true) => include_bytes!("assert-align-1k-highcode.x"),
+        (true, false) => include_bytes!("assert-align-1k-no-highcode.x"),
         _ => b"",
     };
     fs::write(out_dir.join("assert-align.x"), asserts).unwrap();
@@ -183,8 +183,8 @@ fn main() {
 
     println!("cargo:rerun-if-changed=link-highcode.x");
     println!("cargo:rerun-if-changed=link-no-highcode.x");
-    println!("cargo:rerun-if-changed=assert-v2-align-highcode.x");
-    println!("cargo:rerun-if-changed=assert-v2-align-no-highcode.x");
+    println!("cargo:rerun-if-changed=assert-align-1k-highcode.x");
+    println!("cargo:rerun-if-changed=assert-align-1k-no-highcode.x");
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=Cargo.toml");
 

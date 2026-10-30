@@ -150,13 +150,13 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         );
     }
 
-    // Qingke V3A, V3B, V3C, V3V — the V3 family minus V3F, which alone among
-    // the V3 leaves has `inestcr` (0xBC1) and its own startup sequence
-    // (`startup_ch32h417_v3f.S`), so it cannot share this block.
-    // Leaves corecfgr / intsyscr / nest-level at reset defaults; only OR's /
-    // clear's a couple of bits into mstatus. MPP is written explicitly rather
-    // than relying on its reset value.
-    #[cfg(all(qingke_v3, not(feature = "v3f")))]
+    // Qingke V3A, V3B, V3C. V3F and V3V write a full mstatus in their
+    // own startup sequences, so they cannot share this block.
+    // Only OR's / clear's a couple of bits into mstatus; MPP is written
+    // explicitly rather than relying on its reset value. corecfgr / intsyscr
+    // / inestcr stay at reset defaults on V3A; the V3B/V3C blocks below
+    // set all three.
+    #[cfg(all(qingke_v3, not(any(feature = "v3f", feature = "v3v"))))]
     unsafe {
         #[cfg(feature = "u-mode")]
         core::arch::asm!(
@@ -178,21 +178,44 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         );
     }
 
-    // Qingke V3B: the interrupt wrapper relies on the hardware stack, which is off after
-    // reset (INTSYSCR = 0x4). Same setup as the openwch CH32V205 EVT, see the CH32V205 RM
-    // section 9.5.4:
-    // - corecfgr(0xbc0) = 0x21: prefetch mode 1 (reset default) and IE_REMAP_EN, which maps
-    //   bits 3 and 7 of gintenr (0x800) to mstatus MIE and MPIE. Without it gintenr is read
-    //   only, and the critical section could not disable interrupts.
-    // - intsyscr(0x804) = 0x7: hardware stack, nesting, 1 bit preemption (reset default)
-    // - inestcr(0xbc1) = 0x1: one nesting level
+    // Qingke V3B (CH32V205), matching WCH's startup_ch32v205.S.
+    // CH32V205 RM V1.2 §9.5.4: corecfgr = 0x21 enables prefetch and
+    // IE_REMAP_EN, making gintenr MIE/MPIE writable. intsyscr = 0x7
+    // enables the hardware stack, nesting and one preemption bit.
+    // inestcr = 0x1 permits one nested interrupt (two active levels).
     #[cfg(feature = "v3b")]
     unsafe {
+        use qingke::register::inestcr::{self, NestLevel};
         core::arch::asm!(
             "
             li t0, 0x21
             csrw 0xbc0, t0
             li t0, 0x7
+            csrw 0x804, t0
+            "
+        );
+        inestcr::write(NestLevel::Two as usize);
+    }
+
+    // Qingke V3C (CH585/CH584, CH570/CH572): the same three CSRs as V3F,
+    // with the values of startup_CH585.S / startup_CH572.S. CH585 datasheet
+    // V1.6, "Microprocessor Configuration Register", "Interrupt System Control
+    // Register" and "Interrupt Nesting Control Register":
+    // - corecfgr(0xbc0) = 0x25: FETCH_MODE = 01 (prefetch enabled, the reset
+    //   default), ROM_JUMP_ACC (jump acceleration for the ROM area) and
+    //   IE_REMAP_EN, which maps bits 3 and 7 of CSR 0x800 to mstatus MIE and
+    //   MPIE. Without it 0x800 is read only, and the critical section could not
+    //   disable interrupts.
+    // - intsyscr(0x804) = 0x3: HWSTKEN, the hardware stack that the interrupt
+    //   trampoline relies on. Bit 1, INESTEN, is read only and reads 1.
+    // - inestcr(0xbc1) = 0x1: NEST_LVL = 01, one level of nesting.
+    #[cfg(feature = "v3c")]
+    unsafe {
+        core::arch::asm!(
+            "
+            li t0, 0x25
+            csrw 0xbc0, t0
+            li t0, 0x3
             csrw 0x804, t0
             li t0, 0x1
             csrw 0xbc1, t0
@@ -200,8 +223,47 @@ unsafe extern "C" fn qingke_setup_interrupts() {
         );
     }
 
+    // Qingke V3V (CH32V407/CH32V467), matching WCH's startup_ch32v4x7.S.
+    // VS = Dirty (bits 10:9), not FS: this core has vectors, not scalar FP.
+    // Keep M-mode by default; `u-mode` uses the SDK's 0x688 mstatus value.
+    #[cfg(feature = "v3v")]
+    unsafe {
+        use qingke::register::inestcr::{self, NestLevel};
+        core::arch::asm!(
+            "
+            li t0, 0x100
+            csrc 0x805, t0
+            li t0, 0x21
+            csrw 0xBC0, t0
+            "
+        );
+        inestcr::write(NestLevel::Two as usize);
+        core::arch::asm!(
+            "
+            li t0, 0x07
+            csrw 0x804, t0
+            "
+        );
+        // 0x688 = VS Dirty + MPIE + MIE + MPP = U
+        // 0x1e88 = the same with MPP = M
+        #[cfg(feature = "u-mode")]
+        core::arch::asm!(
+            "
+            li t0, 0x688
+            csrw mstatus, t0
+            "
+        );
+        #[cfg(not(feature = "u-mode"))]
+        core::arch::asm!(
+            "
+            li t0, 0x1e88
+            csrw mstatus, t0
+            "
+        );
+    }
+
     // Qingke V3F (CH32H417 primary core).
-    // Unlike V3A/V3B, V3F's WCH startup writes the full set of QingKe
+    // Unlike V3A, V3F's WCH startup writes the full set of QingKe
     // control CSRs: pipeline/branch-prediction config (corecfgr 0xBC0),
     // 2-level nest control (inestcr 0xBC1), interrupt nesting +
     // hardware-stack enable (intsyscr 0x804), and a full `csrw` of

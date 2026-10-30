@@ -38,6 +38,21 @@ const LEAVES: &[LeafSpec] = &[
         family: "qingke_v3",
         caps: &[
             "dm_dataaddr_380",
+            "csr_inestcr",
+            "csr_gintenr",
+            "csr_corecfgr",
+            "csr_intsyscr",
+            "csr_mtvec",
+        ],
+    },
+    // No `dm_dataaddr_*`: neither the CH570 nor the CH585 EVT has an SDI
+    // printf, so the debug module data address is unknown and `qingke::dm`
+    // is left out rather than guessed.
+    LeafSpec {
+        leaf: "v3c",
+        family: "qingke_v3",
+        caps: &[
+            "csr_inestcr",
             "csr_gintenr",
             "csr_corecfgr",
             "csr_intsyscr",
@@ -46,6 +61,20 @@ const LEAVES: &[LeafSpec] = &[
     },
     LeafSpec {
         leaf: "v3f",
+        family: "qingke_v3",
+        caps: &[
+            "dm_dataaddr_340",
+            "csr_inestcr",
+            "csr_gintenr",
+            "csr_corecfgr",
+            "csr_intsyscr",
+            "csr_mtvec",
+        ],
+    },
+    // CH32V407/CH32V467: WCH EVT's SRC/Debug/debug.c and SDI_Printf
+    // example use DATA0 = 0xE0000340 and DATA1 = 0xE0000344.
+    LeafSpec {
+        leaf: "v3v",
         family: "qingke_v3",
         caps: &[
             "dm_dataaddr_340",
@@ -182,5 +211,51 @@ pub fn emit_selected_leaf_cfgs() {
                 names.join(", ")
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::LEAVES;
+
+    #[test]
+    fn v3b_capabilities_support_evt_interrupt_setup() {
+        let spec = LEAVES.iter().find(|spec| spec.leaf == "v3b").unwrap();
+        assert_eq!(spec.family, "qingke_v3");
+        for cap in [
+            "csr_inestcr",
+            "csr_gintenr",
+            "csr_corecfgr",
+            "csr_intsyscr",
+            "csr_mtvec",
+        ] {
+            assert!(spec.caps.contains(&cap));
+        }
+        assert!(!spec.caps.contains(&"pfic_v3"));
+        assert!(!spec.caps.contains(&"cs_mstatus"));
+    }
+
+    #[test]
+    fn v3v_capabilities_match_evt_without_old_pfic_layout() {
+        let spec = LEAVES.iter().find(|spec| spec.leaf == "v3v").unwrap();
+        assert_eq!(spec.family, "qingke_v3");
+        for cap in [
+            "csr_inestcr",
+            "csr_gintenr",
+            "csr_corecfgr",
+            "csr_intsyscr",
+            "csr_mtvec",
+        ] {
+            assert!(spec.caps.contains(&cap));
+        }
+        let dm_caps: Vec<_> = spec
+            .caps
+            .iter()
+            .copied()
+            .filter(|cap| cap.starts_with("dm_dataaddr_"))
+            .collect();
+        assert_eq!(dm_caps, ["dm_dataaddr_340"]);
+        assert!(!spec.caps.contains(&"pfic_v3"));
+        assert!(!spec.caps.contains(&"cs_mstatus"));
     }
 }
