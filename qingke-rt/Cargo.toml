@@ -5,7 +5,6 @@ edition.workspace = true
 authors.workspace = true
 repository.workspace = true
 documentation.workspace = true
-homepage.workspace = true
 categories.workspace = true
 license.workspace = true
 description = "Minimal runtime / startup for WCH's RISC-V MCUs, managed by the ch32-rs team"
