@@ -7,11 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-10-31
+
 ### Added
 
 - Add `v3c` feature flag for the QingKe V3C core (CH585/CH584,
   CH570/CH572): startup CSR configuration following the vendor EVT
   ([#33](https://github.com/ch32-rs/qingke/issues/33)).
+- Add `v3v` feature flag for the QingKe V3V core (CH32V407/CH32V467):
+  startup CSR configuration, SDI data addresses and 1KB vector-table alignment
+  ([#36](https://github.com/ch32-rs/qingke/pull/36)).
 
 ### Fixed
 
@@ -62,7 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix linking macro in `qingke-rt-macros`.
 
-[Unreleased]: https://github.com/ch32-rs/qingke/compare/v0.8.2...HEAD
+[Unreleased]: https://github.com/ch32-rs/qingke/compare/v0.8.3...HEAD
+[0.8.3]: https://github.com/ch32-rs/qingke/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/ch32-rs/qingke/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/ch32-rs/qingke/compare/v0.7.0...v0.8.1
 [0.7.0]: https://github.com/ch32-rs/qingke/compare/v0.6.1...v0.7.0
