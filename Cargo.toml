@@ -7,7 +7,7 @@ repository = "https://github.com/ch32-rs/qingke"
 documentation = "https://docs.rs/qingke"
 categories = ["embedded", "no-std", "hardware-support"]
 license = "MIT/Apache-2.0"
-version = "0.8.3" # for rt and macros
+version = "0.8.4" # for rt and macros
 edition = "2024"
 
 [package]
