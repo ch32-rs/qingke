@@ -21,6 +21,18 @@ unsafe impl Impl for SingleHartCriticalSection {
                 // gintenr::set_disable/set_enable keep 0x8 for general-purpose use.
                 let prior: usize;
                 unsafe { core::arch::asm!("csrrc {}, 0x800, {}", out(reg) prior, in(reg) 0x88usize) };
+                // `MPIE` is the value `mret` loads back into `MIE`. When `MIE`
+                // is already clear — the deepest nesting level, since the
+                // vendor settings allow only one preemption — `release` leaves
+                // `MPIE` alone, so put it back here. Leaving it clear returns
+                // from the interrupt with global interrupts disabled and the
+                // executor never wakes up again. Restoring it early is
+                // equivalent: it cannot be cleared again while `MIE` is clear,
+                // because no interrupt is taken and an exception's `mret`
+                // leaves it set.
+                if prior & 0x88 == 0x80 {
+                    unsafe { core::arch::asm!("csrs 0x800, {}", in(reg) 0x80usize) };
+                }
                 (prior & 0x8) != 0
             } else {
                 compile_error!(
