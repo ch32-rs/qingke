@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`qingke-rt` startup:** enable the hardware stack, interrupt nesting and
   writable gintenr MIE/MPIE mapping on V3B (CH32V205)
   ([#34](https://github.com/ch32-rs/qingke/pull/34)).
+- **`qingke` critical section:** restore `mstatus.MPIE` in `acquire` when the
+  section is entered with `MIE` already clear. `MPIE` is the value `mret` loads
+  back into `MIE`; a critical section inside a second-level interrupt (the
+  deepest level `intsyscr.INESTEN=1` allows) cleared it and `release` skipped
+  restoring it, so `mret` returned with global interrupts disabled and the
+  executor parked in `wfi` forever. Found on CH32V467 with the Ethernet PHY
+  interrupt preempting the SysTick time driver.
 
 ## [0.8.2] - 2026-10-05
 
