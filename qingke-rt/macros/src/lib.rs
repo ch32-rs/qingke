@@ -102,6 +102,11 @@ pub fn highcode(_args: TokenStream, input: TokenStream) -> TokenStream {
 
 /// Marks a function as an interrupt handler. (Wrapping as a mret function)
 ///
+/// The trampoline is only `jal` + `mret`: with `HWSTKEN` enabled (which
+/// `qingke-rt` turns on during `_setup_interrupts`), hardware already saves and
+/// restores every caller-saved integer register — including `ra`/`x1` — around
+/// the interrupt. A software `push`/`pop` of `ra` would be redundant.
+///
 /// Note that Rust has also introduced the `riscv-interrupt-m` and `riscv-interrupt-s` ABI, which
 /// are used for machine and supervisor mode interrupts, respectively. These ABIs can also be used for
 /// Qingke cores, yet they add additional register saving and restoring that is not necessary.
@@ -276,6 +281,9 @@ pub fn interrupt(args: TokenStream, input: TokenStream) -> TokenStream {
         (".trap".to_string(), ".trap.rust".to_string())
     };
 
+    // HWSTKEN already preserves ra across the interrupt (see doc comment).
+    // Keep the trampoline as jal+mret so the Rust body can still use a normal
+    // calling convention without a software push/pop of ra.
     let start_interrupt = format!(
         r#"
 core::arch::global_asm!(
@@ -283,11 +291,7 @@ core::arch::global_asm!(
     .align 2
     .global {interrupt}
     {interrupt}:
-        addi sp, sp, -4
-        sw ra, 0(sp)
         jal {wrapped_name}
-        lw ra, 0(sp)
-        addi sp, sp, 4
         mret
 ");"#
     );
