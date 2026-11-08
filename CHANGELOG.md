@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`qingke-rt` interrupt / exception trampolines:** drop the software
+  `push`/`pop` of `ra`. With `HWSTKEN` enabled (always on under
+  `_setup_interrupts`), hardware already saves and restores every caller-saved
+  integer register — including `ra`/`x1` — around the trap, so the software
+  save was redundant ([#28](https://github.com/ch32-rs/qingke/issues/28)).
+
 ## [0.8.4] - 2026-11-04
 
 ### Fixed

@@ -448,17 +448,15 @@ pub fn DefaultExceptionHandler() -> ! {
     }
 }
 
-// override _start_trap in riscv-rt
+// Override _start_trap in riscv-rt. Same rationale as `#[interrupt]`: with
+// HWSTKEN enabled, hardware already saves/restores ra around the trap, so the
+// trampoline is just jal + mret.
 global_asm!(
     r#"
         .section .trap, "ax"
         .global _exception_handler
     _exception_handler:
-        addi sp, sp, -4
-        sw ra, 0(sp)
         jal _exception_handler_rust
-        lw ra, 0(sp)
-        addi sp, sp, 4
         mret
     "#
 );
