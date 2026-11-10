@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`dual-core-critical-section`**: opt-in critical section for the
+  single-image CH32H417 model that adds a spinlock shared by both harts
+  (per-hart nesting depth). The default single-hart section cannot serialise
+  them ([ch32-rs/ch32-hal#251](https://github.com/ch32-rs/ch32-hal/issues/251)).
+
 ### Changed
 
 - **`qingke-rt` interrupt / exception trampolines:** drop the software

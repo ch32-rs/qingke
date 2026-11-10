@@ -35,6 +35,9 @@ defmt = { version = "1.0.1", optional = true }
 
 [features]
 critical-section-impl = ["dep:critical-section"]
+# Single-image dual-hart CH32H417: critical sections also take a spinlock that
+# both harts share (see src/critical_section_impl.rs).
+dual-core-critical-section = ["critical-section-impl"]
 defmt = ["dep:defmt"]
 dual-core = []
 unsafe-trust-wch-atomics = []
